@@ -37,7 +37,7 @@ public class ZoneCulture extends Zone {
         System.out.println("Statut : " + statut.getLibelle());
         System.out.println("Nombre de cultures : " + cultures.size());
         for (int i = 0; i < cultures.size(); i++) {
-            System.out.println("  " + (i + 1) + ". " + cultures.get(i));
+            System.out.println("  " + (i + 1) + ". " + cultures.get(i).getNom());
         }
         historiqueProduction.afficher();
     }
