@@ -58,8 +58,6 @@ public class CapteurGPS extends Capteur {
             System.out.println("  Capteur GPS " + code + " suspendu, relevé ignoré.");
             return false;
         }
-        if (nbReleves >= MAX_RELEVES) return false;
-
         if (!releve.estGPS() || releve.getPosition() == null) {
             System.out.println("  Capteur GPS " + code + " incompatible avec un relevé numérique.");
             return false;
@@ -67,9 +65,8 @@ public class CapteurGPS extends Capteur {
 
         NiveauGravite niveau = evaluerPositionGPS(releve.getPosition());
         releve.setNiveau(niveau);
-        
-        releves[nbReleves] = releve;
-        nbReleves++;
+
+        releves.add(releve);
         return true;
     }
 

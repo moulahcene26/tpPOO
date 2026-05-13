@@ -31,9 +31,5 @@ public class Culture {
     public void setStadeActuel(StadeCroissance stade) { this.stadeActuel = stade; }
     public void setDateRecoltePrevue(String date) { this.dateRecoltePrevue = date; }
 
-    public String toString() {
-        return nom + " [" + famille.getLibelle() + "] - Stade: " + stadeActuel.getLibelle()
-             + " | Planté le " + datePlantation + " | Récolte prévue: " + dateRecoltePrevue
-             + " | Exigences: " + exigences;
-    }
+ 
 }

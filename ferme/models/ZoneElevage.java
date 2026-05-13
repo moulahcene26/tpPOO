@@ -1,13 +1,13 @@
 package ferme.models;
 
 import ferme.enums.TypeElevage;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ZoneElevage extends Zone {
-    public static final int MAX_ANIMAUX = 100;
 
     private TypeElevage typeElevage;
-    private Animal[] animaux;
-    private int nbAnimaux;
+    private Map<Integer, Animal> animaux;
     private ProgrammeAlimentation programmeAlimentation;
     private PositionGPS centreZone;
     private double rayonZoneMetres;
@@ -16,37 +16,26 @@ public class ZoneElevage extends Zone {
                        PositionGPS centreZone, double rayonZoneMetres) {
         super(code, nom, typeElevage == TypeElevage.RUMINANT ? "litres" : "oeufs");
         this.typeElevage = typeElevage;
-        this.animaux = new Animal[MAX_ANIMAUX];
-        this.nbAnimaux = 0;
+        this.animaux = new LinkedHashMap<>();
         this.programmeAlimentation = null;
         this.centreZone = centreZone;
         this.rayonZoneMetres = rayonZoneMetres;
     }
 
     public boolean ajouterAnimal(Animal animal) {
-        if (nbAnimaux >= MAX_ANIMAUX) return false;
         if (animal.getTypeElevage() != this.typeElevage) {
             System.out.println("  Erreur : type d'élevage incompatible.");
             return false;
         }
-        animaux[nbAnimaux] = animal;
-        nbAnimaux++;
+        animaux.put(animal.getNumero(), animal);
         return true;
     }
 
-    public Animal getAnimal(int index) {
-        if (index >= 0 && index < nbAnimaux) return animaux[index];
-        return null;
-    }
-
     public Animal rechercherAnimalParNumero(int numero) {
-        for (int i = 0; i < nbAnimaux; i++) {
-            if (animaux[i].getNumero() == numero) return animaux[i];
-        }
-        return null;
+        return animaux.get(numero);
     }
 
-    public int getNbAnimaux() { return nbAnimaux; }
+    public int getNbAnimaux() { return animaux.size(); }
     public TypeElevage getTypeElevage() { return typeElevage; }
     public ProgrammeAlimentation getProgrammeAlimentation() { return programmeAlimentation; }
     public PositionGPS getCentreZone() { return centreZone; }
@@ -58,15 +47,16 @@ public class ZoneElevage extends Zone {
 
     public String getTypeZone() { return "Élevage (" + typeElevage.getLibelle() + ")"; }
 
-    public int getNombreEntites() { return nbAnimaux; }
+    public int getNombreEntites() { return animaux.size(); }
 
     public void afficherDetails() {
         System.out.println("=== Zone d'Élevage : " + nom + " (" + code + ") ===");
         System.out.println("Type : " + typeElevage.getLibelle());
         System.out.println("Statut : " + statut.getLibelle());
-        System.out.println("Nombre d'animaux : " + nbAnimaux);
-        for (int i = 0; i < nbAnimaux; i++) {
-            System.out.println("  " + (i + 1) + ". " + animaux[i]);
+        System.out.println("Nombre d'animaux : " + animaux.size());
+        int i = 1;
+        for (Animal a : animaux.values()) {
+            System.out.println("  " + i++ + ". " + a);
         }
         if (programmeAlimentation != null) {
             System.out.println("Programme d'alimentation : " + programmeAlimentation);

@@ -1,56 +1,54 @@
 package ferme.models;
 
-public class HistoriqueProduction {
-    public static final int MAX_ENTREES = 100;
+import java.util.ArrayList;
+import java.util.List;
 
-    private String[] dates;
-    private double[] valeurs;
+public class HistoriqueProduction {
+
+    private List<String> dates;
+    private List<Double> valeurs;
     private String unite;
-    private int nbEntrees;
 
     public HistoriqueProduction(String unite) {
-        this.dates = new String[MAX_ENTREES];
-        this.valeurs = new double[MAX_ENTREES];
+        this.dates = new ArrayList<>();
+        this.valeurs = new ArrayList<>();
         this.unite = unite;
-        this.nbEntrees = 0;
     }
 
     public boolean ajouterEntree(String date, double valeur) {
-        if (nbEntrees >= MAX_ENTREES) return false;
-        dates[nbEntrees] = date;
-        valeurs[nbEntrees] = valeur;
-        nbEntrees++;
+        dates.add(date);
+        valeurs.add(valeur);
         return true;
     }
 
-    public int getNbEntrees() { return nbEntrees; }
+    public int getNbEntrees() { return dates.size(); }
     public String getUnite() { return unite; }
 
     public String getDate(int index) {
-        if (index >= 0 && index < nbEntrees) return dates[index];
+        if (index >= 0 && index < dates.size()) return dates.get(index);
         return null;
     }
 
     public double getValeur(int index) {
-        if (index >= 0 && index < nbEntrees) return valeurs[index];
+        if (index >= 0 && index < valeurs.size()) return valeurs.get(index);
         return -1;
     }
 
     public double moyenneProduction() {
-        if (nbEntrees == 0) return 0;
+        if (dates.size() == 0) return 0;
         double somme = 0;
-        for (int i = 0; i < nbEntrees; i++) {
-            somme += valeurs[i];
+        for (int i = 0; i < valeurs.size(); i++) {
+            somme += valeurs.get(i);
         }
-        return somme / nbEntrees;
+        return somme / valeurs.size();
     }
 
     public void afficher() {
         System.out.println("--- Historique de production (" + unite + ") ---");
-        for (int i = 0; i < nbEntrees; i++) {
-            System.out.println("  " + dates[i] + " : " + valeurs[i] + " " + unite);
+        for (int i = 0; i < dates.size(); i++) {
+            System.out.println("  " + dates.get(i) + " : " + valeurs.get(i) + " " + unite);
         }
-        if (nbEntrees > 0) {
+        if (dates.size() > 0) {
             System.out.println("  Moyenne : " + String.format("%.2f", moyenneProduction()) + " " + unite);
         }
     }

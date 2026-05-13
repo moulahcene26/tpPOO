@@ -3,32 +3,28 @@ package ferme;
 import ferme.enums.*;
 import ferme.interfaces.*;
 import ferme.models.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, IGestionCapteurs, IGestionAlertes {
 
-    public static final int MAX_ZONES = 50;
-    public static final int MAX_CAPTEURS = 200;
     public static final int MAX_ALERTES = 500;
 
     private String nomFerme;
-    private Zone[] zones;
-    private int nbZones;
-    private Capteur[] capteurs;
-    private int nbCapteurs;
+    private Map<String, Zone> zones;
+    private Map<String, Capteur> capteurs;
     private Alerte[] alertes;
     private int nbAlertes;
 
-    private static final String ANSI_RESET = "\u001B[0m";
-    private static final String ANSI_VERT = "\u001B[32m";
-    private static final String ANSI_JAUNE = "\u001B[33m";
-    private static final String ANSI_ROUGE = "\u001B[31m";
+    private static final String ANSI_RESET = "[0m";
+    private static final String ANSI_VERT = "[32m";
+    private static final String ANSI_JAUNE = "[33m";
+    private static final String ANSI_ROUGE = "[31m";
 
     public Ferme(String nomFerme) {
         this.nomFerme = nomFerme;
-        this.zones = new Zone[MAX_ZONES];
-        this.nbZones = 0;
-        this.capteurs = new Capteur[MAX_CAPTEURS];
-        this.nbCapteurs = 0;
+        this.zones = new HashMap<>();
+        this.capteurs = new HashMap<>();
         this.alertes = new Alerte[MAX_ALERTES];
         this.nbAlertes = 0;
     }
@@ -38,16 +34,11 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
     // ======================== IGestionZones ========================
 
     public boolean ajouterZone(Zone zone) {
-        if (nbZones >= MAX_ZONES) {
-            System.out.println("Erreur : nombre maximal de zones atteint.");
-            return false;
-        }
         if (rechercherZone(zone.getCode()) != null) {
             System.out.println("Erreur : une zone avec le code " + zone.getCode() + " existe déjà.");
             return false;
         }
-        zones[nbZones] = zone;
-        nbZones++;
+        zones.put(zone.getCode(), zone);
         System.out.println("Zone ajoutée : " + zone);
         return true;
     }
@@ -70,10 +61,9 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
             return false;
         }
         zone.activer();
-        // Réactiver tous les capteurs de cette zone
-        for (int i = 0; i < nbCapteurs; i++) {
-            if (capteurs[i].getCodeZone().equals(codeZone)) {
-                capteurs[i].reactiver();
+        for (Capteur c : capteurs.values()) {
+            if (c.getCodeZone().equals(codeZone)) {
+                c.reactiver();
             }
         }
         System.out.println("Zone " + codeZone + " activée. Capteurs associés réactivés.");
@@ -87,10 +77,9 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
             return false;
         }
         zone.suspendre();
-        // Suspendre tous les capteurs de cette zone
-        for (int i = 0; i < nbCapteurs; i++) {
-            if (capteurs[i].getCodeZone().equals(codeZone)) {
-                capteurs[i].suspendre();
+        for (Capteur c : capteurs.values()) {
+            if (c.getCodeZone().equals(codeZone)) {
+                c.suspendre();
             }
         }
         System.out.println("Zone " + codeZone + " suspendue. Capteurs associés suspendus.");
@@ -98,10 +87,7 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
     }
 
     public Zone rechercherZone(String codeZone) {
-        for (int i = 0; i < nbZones; i++) {
-            if (zones[i].getCode().equals(codeZone)) return zones[i];
-        }
-        return null;
+        return zones.get(codeZone);
     }
 
     public boolean affecterCultureAZone(String codeZone, Culture culture) {
@@ -142,8 +128,9 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         System.out.println("\n╔══════════════════════════════════════════════════════════════╗");
         System.out.println("║       VUE D'ENSEMBLE DES ZONES - " + nomFerme);
         System.out.println("╠══════════════════════════════════════════════════════════════╣");
-        for (int i = 0; i < nbZones; i++) {
-            System.out.println("║  " + (i + 1) + ". " + zones[i]);
+        int i = 1;
+        for (Zone z : zones.values()) {
+            System.out.println("║  " + i++ + ". " + z);
         }
         System.out.println("╚══════════════════════════════════════════════════════════════╝");
     }
@@ -161,10 +148,9 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
     // ======================== IGestionCultures ========================
 
     public boolean enregistrerCulture(Culture culture) {
-        // Trouve la première zone de culture disponible
-        for (int i = 0; i < nbZones; i++) {
-            if (zones[i] instanceof ZoneCulture) {
-                return ((ZoneCulture) zones[i]).ajouterCulture(culture);
+        for (Zone z : zones.values()) {
+            if (z instanceof ZoneCulture) {
+                return ((ZoneCulture) z).ajouterCulture(culture);
             }
         }
         System.out.println("Erreur : aucune zone de culture disponible.");
@@ -217,9 +203,9 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
             System.out.println("Erreur : un animal avec le numéro " + animal.getNumero() + " existe déjà.");
             return false;
         }
-        for (int i = 0; i < nbZones; i++) {
-            if (zones[i] instanceof ZoneElevage) {
-                ZoneElevage ze = (ZoneElevage) zones[i];
+        for (Zone z : zones.values()) {
+            if (z instanceof ZoneElevage) {
+                ZoneElevage ze = (ZoneElevage) z;
                 if (ze.getTypeElevage() == animal.getTypeElevage()) {
                     return ze.ajouterAnimal(animal);
                 }
@@ -279,9 +265,9 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
     }
 
     private Animal rechercherAnimal(int numero) {
-        for (int i = 0; i < nbZones; i++) {
-            if (zones[i] instanceof ZoneElevage) {
-                Animal a = ((ZoneElevage) zones[i]).rechercherAnimalParNumero(numero);
+        for (Zone z : zones.values()) {
+            if (z instanceof ZoneElevage) {
+                Animal a = ((ZoneElevage) z).rechercherAnimalParNumero(numero);
                 if (a != null) return a;
             }
         }
@@ -291,16 +277,13 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
     // ======================== IGestionCapteurs ========================
 
     public boolean ajouterCapteur(Capteur capteur) {
-        if (nbCapteurs >= MAX_CAPTEURS) {
-            System.out.println("Erreur : nombre maximal de capteurs atteint.");
-            return false;
-        }
         if (rechercherCapteur(capteur.getCode()) != null) {
             System.out.println("Erreur : un capteur avec le code " + capteur.getCode() + " existe déjà.");
             return false;
         }
-        capteurs[nbCapteurs] = capteur;
-        nbCapteurs++;
+        capteurs.put(capteur.getCode(), capteur);
+        Zone z = rechercherZone(capteur.getCodeZone());
+        if (z != null) z.ajouterCapteurAssoc(capteur);
         System.out.println("Capteur ajouté : " + capteur);
         return true;
     }
@@ -333,14 +316,13 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         System.out.println("║  TABLEAU DE BORD DES CAPTEURS - Zone " + codeZone);
         System.out.println("╠══════════════════════════════════════════════════════════╣");
         int compteur = 0;
-        for (int i = 0; i < nbCapteurs; i++) {
-            if (capteurs[i].getCodeZone().equals(codeZone)) {
-                String indicateur = indicateurStatutCapteur(capteurs[i].getStatut());
-                System.out.println("║  " + indicateur + " " + capteurs[i]);
+        for (Capteur c : capteurs.values()) {
+            if (c.getCodeZone().equals(codeZone)) {
+                String indicateur = indicateurStatutCapteur(c.getStatut());
+                System.out.println("║  " + indicateur + " " + c);
 
-                // Dernier relevé
-                if (capteurs[i].getNbReleves() > 0) {
-                    Releve dernier = capteurs[i].getReleve(capteurs[i].getNbReleves() - 1);
+                if (c.getNbReleves() > 0) {
+                    Releve dernier = c.getReleve(c.getNbReleves() - 1);
                     String resumeNiveau = indicateurNiveau(dernier.getNiveau());
                     System.out.println("║       Dernier relevé : "
                             + colorerParNiveau(dernier.toString(), dernier.getNiveau())
@@ -400,18 +382,15 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
 
     public void afficherGraphiqueParZone(String codeZone) {
         System.out.println("\n=== GRAPHIQUES D'ÉVOLUTION - Zone " + codeZone + " ===");
-        for (int i = 0; i < nbCapteurs; i++) {
-            if (capteurs[i].getCodeZone().equals(codeZone)) {
-                capteurs[i].afficherGraphique();
+        for (Capteur c : capteurs.values()) {
+            if (c.getCodeZone().equals(codeZone)) {
+                c.afficherGraphique();
             }
         }
     }
 
     private Capteur rechercherCapteur(String codeCapteur) {
-        for (int i = 0; i < nbCapteurs; i++) {
-            if (capteurs[i].getCode().equals(codeCapteur)) return capteurs[i];
-        }
-        return null;
+        return capteurs.get(codeCapteur);
     }
 
     private void synchroniserPositionAnimalSiGPS(Capteur capteur, Releve releve) {
@@ -479,7 +458,6 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         System.out.println("║              PANNEAU D'ALERTES - " + nomFerme);
         System.out.println("╠══════════════════════════════════════════════════════════════╣");
 
-        // Critiques d'abord
         boolean aAlerte = false;
         for (int i = 0; i < nbAlertes; i++) {
             if (!alertes[i].estAcquittee() && alertes[i].getNiveau() == NiveauGravite.CRITIQUE) {
@@ -560,7 +538,6 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
     }
 
     public void trierAlertesParGravite() {
-        // Tri par sélection : critiques en premier
         for (int i = 0; i < nbAlertes - 1; i++) {
             int indexMax = i;
             for (int j = i + 1; j < nbAlertes; j++) {
