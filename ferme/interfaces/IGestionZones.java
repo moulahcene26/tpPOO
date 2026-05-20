@@ -14,4 +14,5 @@ public interface IGestionZones {
     boolean affecterAnimalAZone(String codeZone, Animal animal);
     void afficherVueEnsembleZones();
     void enregistrerProduction(String codeZone, double valeur, String date);
+    void afficherProductionParPlageDate(String codeZone, String dateDebut, String dateFin);
 }

@@ -1,32 +1,30 @@
 package ferme.models;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ZoneAquacole extends Zone {
-    public static final int MAX_ESPECES = 20;
 
-    private EspeceAquacole[] especes;
-    private int nbEspeces;
+    private List<EspeceAquacole> especes;
     private ProgrammeAlimentation programmeAlimentation;
 
     public ZoneAquacole(String code, String nom) {
         super(code, nom, "kg");
-        this.especes = new EspeceAquacole[MAX_ESPECES];
-        this.nbEspeces = 0;
+        this.especes = new ArrayList<>();
         this.programmeAlimentation = null;
     }
 
     public boolean ajouterEspece(EspeceAquacole espece) {
-        if (nbEspeces >= MAX_ESPECES) return false;
-        especes[nbEspeces] = espece;
-        nbEspeces++;
+        if (especes.contains(espece)) return false; 
+        especes.add(espece);
         return true;
     }
 
     public EspeceAquacole getEspece(int index) {
-        if (index >= 0 && index < nbEspeces) return especes[index];
+        if (index >= 0 && index < especes.size()) return especes.get(index);
         return null;
     }
 
-    public int getNbEspeces() { return nbEspeces; }
+    public int getNbEspeces() { return especes.size(); }
     public ProgrammeAlimentation getProgrammeAlimentation() { return programmeAlimentation; }
 
     public void setProgrammeAlimentation(ProgrammeAlimentation programme) {
@@ -35,8 +33,8 @@ public class ZoneAquacole extends Zone {
 
     public int getNombreTotalAnimaux() {
         int total = 0;
-        for (int i = 0; i < nbEspeces; i++) {
-            total += especes[i].getNombreAnimaux();
+        for (int i = 0; i < especes.size(); i++) {
+            total += especes.get(i).getNombreAnimaux();
         }
         return total;
     }
@@ -48,9 +46,9 @@ public class ZoneAquacole extends Zone {
     public void afficherDetails() {
         System.out.println("=== Zone Aquacole : " + nom + " (" + code + ") ===");
         System.out.println("Statut : " + statut.getLibelle());
-        System.out.println("Espèces (" + nbEspeces + ") :");
-        for (int i = 0; i < nbEspeces; i++) {
-            System.out.println("  " + (i + 1) + ". " + especes[i]);
+        System.out.println("Espèces (" + especes.size() + ") :");
+        for (int i = 0; i < especes.size(); i++) {
+            System.out.println("  " + (i + 1) + ". " + especes.get(i));
         }
         System.out.println("Nombre total d'animaux : " + getNombreTotalAnimaux());
         if (programmeAlimentation != null) {
@@ -59,3 +57,4 @@ public class ZoneAquacole extends Zone {
         historiqueProduction.afficher();
     }
 }
+

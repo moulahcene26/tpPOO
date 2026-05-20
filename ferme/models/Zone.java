@@ -1,5 +1,6 @@
 package ferme.models;
 
+import ferme.enums.StatutCapteur;
 import ferme.enums.StatutZone;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,9 @@ public abstract class Zone {
     public void activer() {
         this.statut = StatutZone.ACTIVE;
         for (Capteur c : capteursAssoc) {
-            if (c != null) c.reactiver();
+            if( (c != null) && (c.getStatut() != StatutCapteur.DEFAILLANT) ) {
+                c.reactiver();
+            }
         }
     }
 

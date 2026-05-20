@@ -3,27 +3,24 @@ package ferme.models;
 public class ProgrammeAlimentation {
     private String typeAliment;
     private double quantiteParRepas;
-    private int nombreRepasParJour;
+  
 
     public ProgrammeAlimentation(String typeAliment, double quantiteParRepas, int nombreRepasParJour) {
         this.typeAliment = typeAliment;
         this.quantiteParRepas = quantiteParRepas;
-        this.nombreRepasParJour = nombreRepasParJour;
+      
     }
 
     public String getTypeAliment() { return typeAliment; }
     public double getQuantiteParRepas() { return quantiteParRepas; }
-    public int getNombreRepasParJour() { return nombreRepasParJour; }
+
 
     public void setTypeAliment(String typeAliment) { this.typeAliment = typeAliment; }
     public void setQuantiteParRepas(double quantiteParRepas) { this.quantiteParRepas = quantiteParRepas; }
-    public void setNombreRepasParJour(int nombreRepasParJour) { this.nombreRepasParJour = nombreRepasParJour; }
 
-    public double quantiteTotaleJournaliere() {
-        return quantiteParRepas * nombreRepasParJour;
-    }
+
 
     public String toString() {
-        return "Aliment: " + typeAliment + ", " + quantiteParRepas + " kg/repas, " + nombreRepasParJour + " repas/jour";
+        return "Aliment: " + typeAliment + ", " + quantiteParRepas + " kg/repas, " ;
     }
 }

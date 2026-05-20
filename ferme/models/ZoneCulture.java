@@ -43,7 +43,7 @@ public class ZoneCulture extends Zone {
     }
 
     public void genererRapport() {
-        System.out.println("\nRapport des cultures - Zone " + nom + " (" + code + ")");
+        System.out.println("\nRapport des cultures Zone " + nom + " (" + code + ")");
 
         Map<FamilleCulture, Integer> compteurParFamille = new LinkedHashMap<>();
         Map<StadeCroissance, Integer> compteurParStade  = new LinkedHashMap<>();

@@ -2,232 +2,736 @@ package ferme;
 
 import ferme.enums.*;
 import ferme.models.*;
+import java.util.Scanner;
 
 public class Main {
 
+    private static final Scanner scanner = new Scanner(System.in);
+    private static Ferme ferme;
+
+    // =========================================================================
+    //  MAIN
+    // =========================================================================
+
     public static void main(String[] args) {
+        printMenu("Gestion Intelligente de la Ferme",
+                "Bienvenue ! Commencez par creer votre ferme (option 1).");
 
-        System.out.println("============================================================");
-        System.out.println("    APPLICATION DE GESTION INTELLIGENTE DE LA FERME");
-        System.out.println("============================================================\n");
+        boolean running = true;
+        while (running) {
+            printMenu("Menu Principal",
+                    "1. Creer / changer de ferme",
+                    "2. Zones",
+                    "3. Cultures",
+                    "4. Animaux",
+                    "5. Capteurs",
+                    "6. Releves et production",
+                    "7. Alertes",
+                    "8. Tableaux de bord",
+                    "9. Suspension / activation de zone",
+                    "10. Charger donnees depuis fichier",
+                    "0. Quitter");
 
-        // ====================== CRÉATION DE LA FERME ======================
-        Ferme ferme = new Ferme("Ferme El-Djazaïr");
+            try {
+                switch (readInt("Choix: ")) {
+                    case 1: creerFerme();       break;
+                    case 2: menuZones();        break;
+                    case 3: menuCultures();     break;
+                    case 4: menuAnimaux();      break;
+                    case 5: menuCapteurs();     break;
+                    case 6: menuReleves();      break;
+                    case 7: menuAlertes();      break;
+                    case 8: menuDashboard();    break;
+                    case 9: menuSuspension();   break;
+                    case 10: chargerDonneesGlobales(); break;
+                    case 0: running = false;    break;
+                    default: System.out.println("Choix inconnu.");
+                }
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                System.out.println("Erreur : " + e.getMessage());
+            }
+        }
 
-        // ====================== 1. GESTION DES ZONES ======================
-        System.out.println(">>>>> 1. CRÉATION DES ZONES <<<<<\n");
+        System.out.println("Au revoir !");
+    }
 
-        ZoneCulture zc1 = new ZoneCulture("ZC01", "Champ Nord - Céréales");
-        ZoneCulture zc2 = new ZoneCulture("ZC02", "Parcelle Sud - Maraîchage");
+    // =========================================================================
+    //  1. FERME
+    // =========================================================================
 
-        ZoneElevage ze1 = new ZoneElevage("ZE01", "Pâturage Est - Bovins",
-                TypeElevage.RUMINANT, new PositionGPS(36.75, 2.85), 500);
-        ZoneElevage ze2 = new ZoneElevage("ZE02", "Poulailler Central",
-                TypeElevage.VOLAILLE, new PositionGPS(36.76, 2.86), 100);
+    private static void requireFerme() {
+        if (ferme == null) {
+            throw new IllegalStateException("Aucune ferme creee. Utilisez l'option 1 d'abord.");
+        }
+    }
 
-        ZoneAquacole za1 = new ZoneAquacole("ZA01", "Bassin Aquacole");
+    private static void creerFerme() {
+        String nom = readRequiredString("Nom de la ferme: ");
+        ferme = new Ferme(nom);
+        System.out.println("Ferme << " + nom + " >> creee.");
+    }
 
-        ferme.ajouterZone(zc1);
-        ferme.ajouterZone(zc2);
-        ferme.ajouterZone(ze1);
-        ferme.ajouterZone(ze2);
-        ferme.ajouterZone(za1);
+    // =========================================================================
+    //  2. ZONES
+    // =========================================================================
 
-        // Programme d'alimentation
-        ze1.setProgrammeAlimentation(new ProgrammeAlimentation("Foin et granulés", 5.0, 3));
-        ze2.setProgrammeAlimentation(new ProgrammeAlimentation("Grains de maïs", 0.15, 4));
-        za1.setProgrammeAlimentation(new ProgrammeAlimentation("Granulés poissons", 0.5, 2));
+    private static void menuZones() {
+        requireFerme();
+        boolean back = false;
+        while (!back) {
+            printMenu("Zones",
+                    "1. Vue d'ensemble des zones",
+                    "2. Ajouter une zone de culture",
+                    "3. Ajouter une zone d'elevage",
+                    "4. Ajouter une zone aquacole",
+                    "5. Ajouter une espece aquacole",
+                    "6. Definir programme d'alimentation",
+                    "7. Enregistrer une production",
+                    "0. Retour");
 
-        ferme.afficherVueEnsembleZones();
+            try {
+                switch (readInt("Choix: ")) {
+                    case 1: ferme.afficherVueEnsembleZones();     break;
+                    case 2: ajouterZoneCulture();                 break;
+                    case 3: ajouterZoneElevage();                 break;
+                    case 4: ajouterZoneAquacole();                break;
+                    case 5: ajouterEspeceAquacole();              break;
+                    case 6: definirProgrammeAlimentation();       break;
+                    case 7: enregistrerProduction();              break;
+                    case 0: back = true;                          break;
+                    default: System.out.println("Choix inconnu.");
+                }
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                System.out.println("Erreur : " + e.getMessage());
+            }
+        }
+    }
 
-        // ====================== 2. GESTION DES CULTURES ======================
-        System.out.println("\n>>>>> 2. ENREGISTREMENT DES CULTURES <<<<<\n");
+    private static void ajouterZoneCulture() {
+        String id  = readRequiredString("ID de la zone (ex: ZC01): ");
+        String nom = readRequiredString("Nom de la zone: ");
+        ferme.ajouterZone(new ZoneCulture(id, nom));
+        System.out.println("Zone de culture ajoutee.");
+    }
 
-        Culture ble = new Culture("Blé dur", FamilleCulture.CEREALE,
-                "2025-10-15", "2026-06-20",
-                new ExigencesPedologiques(6.0, 7.5, 40, 60));
-        Culture mais = new Culture("Maïs", FamilleCulture.CEREALE,
-                "2026-03-01", "2026-09-15",
-                new ExigencesPedologiques(5.5, 7.0, 50, 70));
-        Culture tomate = new Culture("Tomate", FamilleCulture.LEGUME,
-                "2026-03-15", "2026-08-30",
-                new ExigencesPedologiques(6.0, 6.8, 55, 75));
-        Culture olive = new Culture("Olivier", FamilleCulture.FRUIT,
-                "2025-01-01", "2025-11-15",
-                new ExigencesPedologiques(6.5, 8.0, 30, 50));
+    private static void ajouterZoneElevage() {
+        String id   = readRequiredString("ID de la zone (ex: ZE01): ");
+        String nom  = readRequiredString("Nom de la zone: ");
+        TypeElevage type = readEnum("Type d'elevage", TypeElevage.class);
+        double lat  = readDouble("Latitude GPS: ");
+        double lon  = readDouble("Longitude GPS: ");
+        double surf = readDouble("Superficie (m2): ");
+        ferme.ajouterZone(new ZoneElevage(id, nom, type, new PositionGPS(lat, lon), surf));
+        System.out.println("Zone d'elevage ajoutee.");
+    }
 
-        ferme.affecterCultureAZone("ZC01", ble);
-        ferme.affecterCultureAZone("ZC01", mais);
-        ferme.affecterCultureAZone("ZC02", tomate);
-        ferme.affecterCultureAZone("ZC02", olive);
+    private static void ajouterZoneAquacole() {
+        String id  = readRequiredString("ID de la zone (ex: ZA01): ");
+        String nom = readRequiredString("Nom de la zone: ");
+        ferme.ajouterZone(new ZoneAquacole(id, nom));
+        System.out.println("Zone aquacole ajoutee.");
+    }
 
-        // Mise à jour des stades
-        ferme.mettreAJourStade("ZC01", 0, StadeCroissance.CROISSANCE);
-        ferme.mettreAJourStade("ZC02", 0, StadeCroissance.GERMINATION);
+    private static void ajouterEspeceAquacole() {
+        Zone z = choisirZone();
+        if (!(z instanceof ZoneAquacole)) {
+            throw new IllegalArgumentException("La zone choisie n'est pas aquacole.");
+        }
+        String nom = readRequiredString("Nom de l'espece: ");
+        int    qte = readInt("Quantite initiale: ");
+        ((ZoneAquacole) z).ajouterEspece(new EspeceAquacole(nom, qte));
+        System.out.println("Espece ajoutee.");
+    }
 
-        ferme.afficherStadeCroissance("ZC01");
-        ferme.genererRapportCulturesParZone("ZC01");
+    private static void definirProgrammeAlimentation() {
+        Zone z = choisirZone();
+        String aliment = readRequiredString("Type d'aliment: ");
+        double dose    = readDouble("Dose par repas (kg): ");
+        int    freq    = readInt("Repas par jour: ");
+        ProgrammeAlimentation pa = new ProgrammeAlimentation(aliment, dose, freq);
+        if (z instanceof ZoneElevage) {
+            ((ZoneElevage) z).setProgrammeAlimentation(pa);
+        } else if (z instanceof ZoneAquacole) {
+            ((ZoneAquacole) z).setProgrammeAlimentation(pa);
+        } else {
+            throw new IllegalArgumentException("Cette zone ne supporte pas un programme d'alimentation.");
+        }
+        System.out.println("Programme d'alimentation defini.");
+    }
 
-        // ====================== 3. GESTION DES ANIMAUX ======================
-        System.out.println("\n>>>>> 3. ENREGISTREMENT DES ANIMAUX <<<<<\n");
+    // =========================================================================
+    //  3. CULTURES
+    // =========================================================================
 
-        Animal vache1 = new Animal(1, "Vache", TypeElevage.RUMINANT, 5, 650.0);
-        vache1.setEtatSante(EtatSante.SAIN);
-        Animal vache2 = new Animal(2, "Vache", TypeElevage.RUMINANT, 3, 580.0);
-        vache2.setEtatSante(EtatSante.SAIN);
-        Animal mouton1 = new Animal(3, "Mouton", TypeElevage.RUMINANT, 2, 45.0);
-        mouton1.setEtatSante(EtatSante.SAIN);
+    private static void menuCultures() {
+        requireFerme();
+        boolean back = false;
+        while (!back) {
+            printMenu("Cultures",
+                    "1. Affecter une culture a une zone",
+                    "2. Mettre a jour le stade de croissance",
+                    "3. Afficher stades d'une zone",
+                    "4. Rapport cultures par zone",
+                    "5. Filtrer par famille de culture",
+                    "0. Retour");
 
-        Animal poulet1 = new Animal(101, "Poulet", TypeElevage.VOLAILLE, 1, 2.5);
-        poulet1.setEtatSante(EtatSante.SAIN);
-        Animal dinde1 = new Animal(102, "Dinde", TypeElevage.VOLAILLE, 1, 8.0);
-        dinde1.setEtatSante(EtatSante.SAIN);
+            try {
+                switch (readInt("Choix: ")) {
+                    case 1: affecterCulture();    break;
+                    case 2: majStade();            break;
+                    case 3: {
+                        String id = readRequiredString("ID de la zone: ");
+                        ferme.afficherStadeCroissance(id);
+                        break;
+                    }
+                    case 4: {
+                        String id = readRequiredString("ID de la zone: ");
+                        ferme.genererRapportCulturesParZone(id);
+                        break;
+                    }
+                    case 5: {
+                        FamilleCulture fam = readEnum("Famille", FamilleCulture.class);
+                        ferme.afficherCulturesParFamille(null, fam);
+                        break;
+                    }
+                    case 0: back = true; break;
+                    default: System.out.println("Choix inconnu.");
+                }
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                System.out.println("Erreur : " + e.getMessage());
+            }
+        }
+    }
 
-        ferme.affecterAnimalAZone("ZE01", vache1);
-        ferme.affecterAnimalAZone("ZE01", vache2);
-        ferme.affecterAnimalAZone("ZE01", mouton1);
-        ferme.affecterAnimalAZone("ZE02", poulet1);
-        ferme.affecterAnimalAZone("ZE02", dinde1);
+    private static void affecterCulture() {
+        String idZone     = readRequiredString("ID de la zone: ");
+        String nomCulture = readRequiredString("Nom de la culture: ");
+        FamilleCulture fam = readEnum("Famille", FamilleCulture.class);
+        String dateSemis   = readDate("Date de semis   (AAAA-MM-JJ): ");
+        String dateRecolte = readDate("Date de recolte (AAAA-MM-JJ): ");
+        System.out.println("-- Exigences pedologiques --");
+        double[] ph = readDoubleRange("pH minimum: ", "pH maximum: ", "pH");
+        double[] hum = readDoubleRange("Humidite min (%): ", "Humidite max (%): ", "humidite");
+        ferme.affecterCultureAZone(idZone,
+                new Culture(nomCulture, fam, dateSemis, dateRecolte,
+                new ExigencesPedologiques(ph[0], ph[1], hum[0], hum[1])));
+        System.out.println("Culture affectee.");
+    }
 
-        // Espèces aquacoles
-        za1.ajouterEspece(new EspeceAquacole("Tilapia", 200));
-        za1.ajouterEspece(new EspeceAquacole("Crevette", 500));
+    private static void majStade() {
+        String idZone = readRequiredString("ID de la zone: ");
+        int    index  = readInt("Index de la culture (0 = premiere): ");
+        StadeCroissance stade = readEnum("Stade de croissance", StadeCroissance.class);
+        ferme.mettreAJourStade(idZone, index, stade);
+        System.out.println("Stade mis a jour.");
+    }
 
-        // Événements sanitaires
-        ferme.mettreAJourSante(2, EtatSante.MALADE);
-        ferme.enregistrerEvenementSanitaire(2, "Fièvre détectée, antibiotiques administrés", "2026-04-20");
-        ferme.enregistrerEvolutionPoids(1, 655, "2026-04-15");
-        ferme.enregistrerEvolutionPoids(1, 660, "2026-04-28");
+    // =========================================================================
+    //  4. ANIMAUX
+    // =========================================================================
 
-        ferme.afficherProgrammeAlimentation("ZE01");
+    private static void menuAnimaux() {
+        requireFerme();
+        boolean back = false;
+        while (!back) {
+            printMenu("Animaux",
+                    "1. Affecter un animal a une zone",
+                    "2. Mettre a jour l'etat de sante",
+                    "3. Enregistrer un evenement sanitaire",
+                    "4. Enregistrer evolution du poids",
+                    "5. Afficher programme d'alimentation",
+                    "6. Filtrer par etat de sante",
+                    "0. Retour");
 
-        // ====================== 4. GESTION DES CAPTEURS ======================
-        System.out.println("\n>>>>> 4. AJOUT ET CONFIGURATION DES CAPTEURS <<<<<\n");
+            try {
+                switch (readInt("Choix: ")) {
+                    case 1: affecterAnimal();           break;
+                    case 2: majSante();                 break;
+                    case 3: enregistrerEvtSanitaire();  break;
+                    case 4: enregistrerPoids();         break;
+                    case 5: {
+                        String id = readRequiredString("ID de la zone d'elevage: ");
+                        ferme.afficherProgrammeAlimentation(id);
+                        break;
+                    }
+                    case 6: {
+                        EtatSante etat = readEnum("Etat de sante", EtatSante.class);
+                        ferme.afficherAnimauxParEtatSante(null, etat);
+                        break;
+                    }
+                    case 0: back = true; break;
+                    default: System.out.println("Choix inconnu.");
+                }
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                System.out.println("Erreur : " + e.getMessage());
+            }
+        }
+    }
 
-        // Capteurs environnementaux pour zone de culture
-        CapteurEnvironnemental cEnvTemp = new CapteurEnvironnemental("ENV01", "ZC01", 10, 35, TypeCapteurEnv.TEMPERATURE);
-        CapteurEnvironnemental cEnvHum = new CapteurEnvironnemental("ENV02", "ZC01", 40, 80, TypeCapteurEnv.HUMIDITE);
-        CapteurEnvironnemental cEnvPluv = new CapteurEnvironnemental("ENV03", "ZC01", 0, 50, TypeCapteurEnv.PLUVIOMETRIE);
+    private static void affecterAnimal() {
+        String idZone = readRequiredString("ID de la zone d'elevage: ");
+        int    id     = readInt("ID de l'animal: ");
+        String espece = readRequiredString("Espece (ex: Vache): ");
+        TypeElevage type = readEnum("Type d'elevage", TypeElevage.class);
+        int    age   = readInt("Age (annees): ");
+        double poids = readDouble("Poids (kg): ");
+        EtatSante etat = readEnum("Etat de sante", EtatSante.class);
+        Animal a = new Animal(id, espece, type, age, poids);
+        a.setEtatSante(etat);
+        ferme.affecterAnimalAZone(idZone, a);
+        System.out.println("Animal #" + id + " affecte.");
+    }
 
-        // Capteurs de sol
-        CapteurSol cSolPH = new CapteurSol("SOL01", "ZC01", 5.5, 7.5, TypeCapteurSol.PH);
-        CapteurSol cSolHum = new CapteurSol("SOL02", "ZC01", 35, 65, TypeCapteurSol.HUMIDITE_SOL);
-        CapteurSol cSolAzote = new CapteurSol("SOL03", "ZC01", 20, 80, TypeCapteurSol.AZOTE);
+    private static void majSante() {
+        int id = readInt("ID de l'animal: ");
+        EtatSante etat = readEnum("Nouvel etat de sante", EtatSante.class);
+        ferme.mettreAJourSante(id, etat);
+        System.out.println("Etat de sante mis a jour.");
+    }
 
-        // Capteurs biométriques pour animaux
-        CapteurBiometrique cBioTemp1 = new CapteurBiometrique("BIO01", "ZE01", 37.5, 39.5,
-                TypeCapteurBio.TEMPERATURE_CORPORELLE, 1);
-        CapteurBiometrique cBioAct1 = new CapteurBiometrique("BIO02", "ZE01", 10, 80,
-                TypeCapteurBio.ACTIVITE, 1);
+    private static void enregistrerEvtSanitaire() {
+        int    id   = readInt("ID de l'animal: ");
+        String desc = readRequiredString("Description: ");
+        String date = readDate("Date (AAAA-MM-JJ): ");
+        ferme.enregistrerEvenementSanitaire(id, desc, date);
+        System.out.println("Evenement sanitaire enregistre.");
+    }
 
-        // Capteur GPS
-        CapteurGPS cGPS1 = new CapteurGPS("GPS01", "ZE01", 1, 36.75, 2.85, 500);
+    private static void enregistrerPoids() {
+        int    id    = readInt("ID de l'animal: ");
+        double poids = readDouble("Poids actuel (kg): ");
+        String date  = readDate("Date (AAAA-MM-JJ): ");
+        ferme.enregistrerEvolutionPoids(id, poids, date);
+        System.out.println("Poids enregistre.");
+    }
 
-        // Capteurs eau
-        CapteurEau cEauTemp = new CapteurEau("EAU01", "ZA01", 18, 28, TypeCapteurEau.TEMPERATURE_EAU);
-        CapteurEau cEauOxy = new CapteurEau("EAU02", "ZA01", 5, 12, TypeCapteurEau.OXYGENE_DISSOUS);
-        CapteurEau cEauPH = new CapteurEau("EAU03", "ZA01", 6.5, 8.5, TypeCapteurEau.PH_EAU);
+    // =========================================================================
+    //  5. CAPTEURS
+    // =========================================================================
 
-        ferme.ajouterCapteur(cEnvTemp);
-        ferme.ajouterCapteur(cEnvHum);
-        ferme.ajouterCapteur(cEnvPluv);
-        ferme.ajouterCapteur(cSolPH);
-        ferme.ajouterCapteur(cSolHum);
-        ferme.ajouterCapteur(cSolAzote);
-        ferme.ajouterCapteur(cBioTemp1);
-        ferme.ajouterCapteur(cBioAct1);
-        ferme.ajouterCapteur(cGPS1);
-        ferme.ajouterCapteur(cEauTemp);
-        ferme.ajouterCapteur(cEauOxy);
-        ferme.ajouterCapteur(cEauPH);
+    private static void menuCapteurs() {
+        requireFerme();
+        boolean back = false;
+        while (!back) {
+            printMenu("Capteurs",
+                    "1. Ajouter capteur environnemental",
+                    "2. Ajouter capteur de sol",
+                    "3. Ajouter capteur biometrique",
+                    "4. Ajouter capteur GPS",
+                    "5. Ajouter capteur eau",
+                    "6. Charger capteurs depuis fichier",
+                    "0. Retour");
 
-        // ====================== ENVOI DE RELEVÉS ======================
-        System.out.println("\n>>>>> SIMULATION D'ENVOI DE RELEVÉS <<<<<\n");
+            try {
+                switch (readInt("Choix: ")) {
+                    case 1: ajouterCapteurEnv(); break;
+                    case 2: ajouterCapteurSol(); break;
+                    case 3: ajouterCapteurBio(); break;
+                    case 4: ajouterCapteurGPS(); break;
+                    case 5: ajouterCapteurEau(); break;
+                    case 6: chargerCapteursFichiers(); break;
+                    case 0: back = true;         break;
+                    default: System.out.println("Choix inconnu.");
+                }
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                System.out.println("Erreur : " + e.getMessage());
+            }
+        }
+    }
 
-        // Relevés normaux
-        ferme.enregistrerReleve("ENV01", new ReleveNumerique(22.5, "°C", "2026-04-28-08h", "ENV01"));
-        ferme.enregistrerReleve("ENV01", new ReleveNumerique(25.0, "°C", "2026-04-28-12h", "ENV01"));
-        ferme.enregistrerReleve("ENV01", new ReleveNumerique(28.3, "°C", "2026-04-28-16h", "ENV01"));
+    private static void ajouterCapteurEnv() {
+        String id     = readRequiredString("ID capteur (ex: ENV01): ");
+        String idZone = readRequiredString("ID de la zone: ");
+        TypeCapteurEnv type = readEnum("Type", TypeCapteurEnv.class);
+        double min = readDouble("Seuil minimum: ");
+        double max = readDouble("Seuil maximum: ");
+        ferme.ajouterCapteur(new CapteurEnvironnemental(id, idZone, min, max, type));
+        System.out.println("Capteur environnemental ajoute.");
+    }
 
-        // Relevé déclenche AVERTISSEMENT
-        ferme.enregistrerReleve("ENV01", new ReleveNumerique(36.5, "°C", "2026-04-28-18h", "ENV01"));
+    private static void ajouterCapteurSol() {
+        String id     = readRequiredString("ID capteur (ex: SOL01): ");
+        String idZone = readRequiredString("ID de la zone: ");
+        TypeCapteurSol type = readEnum("Type", TypeCapteurSol.class);
+        double min = readDouble("Seuil minimum: ");
+        double max = readDouble("Seuil maximum: ");
+        ferme.ajouterCapteur(new CapteurSol(id, idZone, min, max, type));
+        System.out.println("Capteur de sol ajoute.");
+    }
 
-        // Relevé déclenche CRITIQUE
-        ferme.enregistrerReleve("ENV01", new ReleveNumerique(48.0, "°C", "2026-04-29-14h", "ENV01"));
+    private static void ajouterCapteurBio() {
+        String id       = readRequiredString("ID capteur (ex: BIO01): ");
+        String idZone   = readRequiredString("ID de la zone: ");
+        TypeCapteurBio type = readEnum("Type", TypeCapteurBio.class);
+        double min      = readDouble("Seuil minimum: ");
+        double max      = readDouble("Seuil maximum: ");
+        int    idAnimal = readInt("ID de l'animal lie: ");
+        ferme.ajouterCapteur(new CapteurBiometrique(id, idZone, min, max, type, idAnimal));
+        System.out.println("Capteur biometrique ajoute.");
+    }
 
-        // Relevés sol
-        ferme.enregistrerReleve("SOL01", new ReleveNumerique(6.8, "", "2026-04-28-09h", "SOL01"));
-        ferme.enregistrerReleve("SOL01", new ReleveNumerique(4.5, "", "2026-04-29-09h", "SOL01"));
+    private static void ajouterCapteurGPS() {
+        String id       = readRequiredString("ID capteur (ex: GPS01): ");
+        String idZone   = readRequiredString("ID de la zone: ");
+        int    idAnimal = readInt("ID de l'animal lie: ");
+        double lat      = readDouble("Latitude de reference: ");
+        double lon      = readDouble("Longitude de reference: ");
+        double rayon    = readDouble("Rayon du perimetre (m): ");
+        ferme.ajouterCapteur(new CapteurGPS(id, idZone, idAnimal, lat, lon, rayon));
+        System.out.println("Capteur GPS ajoute.");
+    }
 
-        // Relevés biométriques
-        ferme.enregistrerReleve("BIO01", new ReleveNumerique(38.5, "°C", "2026-04-28-07h", "BIO01"));
-        ferme.enregistrerReleve("BIO01", new ReleveNumerique(40.2, "°C", "2026-04-28-19h", "BIO01"));
+    private static void ajouterCapteurEau() {
+        String id     = readRequiredString("ID capteur (ex: EAU01): ");
+        String idZone = readRequiredString("ID de la zone aquacole: ");
+        TypeCapteurEau type = readEnum("Type", TypeCapteurEau.class);
+        double min = readDouble("Seuil minimum: ");
+        double max = readDouble("Seuil maximum: ");
+        ferme.ajouterCapteur(new CapteurEau(id, idZone, min, max, type));
+        System.out.println("Capteur eau ajoute.");
+    }
 
-        // Relevé GPS - animal dans la zone
-        ferme.enregistrerReleve("GPS01", new ReleveGPS(new PositionGPS(36.751, 2.851), "2026-04-28-10h", "GPS01"));
-        // Relevé GPS - animal HORS zone
-        ferme.enregistrerReleve("GPS01", new ReleveGPS(new PositionGPS(36.80, 2.90), "2026-04-28-15h", "GPS01"));
+    private static void chargerCapteursFichiers() {
+        int nb = readInt("Nombre de fichiers capteurs: ");
+        String[] chemins = new String[nb];
+        for (int i = 0; i < nb; i++) {
+            chemins[i] = readRequiredString("Fichier capteurs " + (i + 1) + ": ");
+        }
+        int total = ferme.chargerCapteursDepuisFichiers(chemins);
+        System.out.println("Capteurs charges : " + total);
+    }
 
-        // Relevés eau
-        ferme.enregistrerReleve("EAU01", new ReleveNumerique(24.0, "°C", "2026-04-28-08h", "EAU01"));
-        ferme.enregistrerReleve("EAU02", new ReleveNumerique(3.5, "mg/L", "2026-04-28-08h", "EAU02"));
+    // =========================================================================
+    //  6. RELEVES & PRODUCTION
+    // =========================================================================
 
-        // ====================== PRODUCTION ======================
-        System.out.println("\n>>>>> ENREGISTREMENT DE PRODUCTION <<<<<\n");
+    private static void menuReleves() {
+        requireFerme();
+        boolean back = false;
+        while (!back) {
+            printMenu("Releves et production",
+                    "1. Saisir un releve numerique",
+                    "2. Charger releves depuis fichiers",
+                    "3. Consulter production par plage de dates",
+                    "0. Retour");
 
-        ferme.enregistrerProduction("ZE01", 120, "2026-04-25");
-        ferme.enregistrerProduction("ZE01", 115, "2026-04-26");
-        ferme.enregistrerProduction("ZE01", 125, "2026-04-27");
-        ferme.enregistrerProduction("ZE02", 85, "2026-04-27");
-        ferme.enregistrerProduction("ZA01", 50, "2026-04-27");
+            try {
+                switch (readInt("Choix: ")) {
+                    case 1: saisirReleve();        break;
+                    case 2: chargerFichiers();     break;
+                    case 3: consulterProduction(); break;
+                    case 0: back = true;           break;
+                    default: System.out.println("Choix inconnu.");
+                }
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                System.out.println("Erreur : " + e.getMessage());
+            }
+        }
+    }
 
-        // ====================== 5. GESTION DES ALERTES ======================
-        System.out.println("\n>>>>> 5. PANNEAU D'ALERTES <<<<<");
-        ferme.trierAlertesParGravite();
-        ferme.afficherPanneauAlertes();
+    private static void saisirReleve() {
+        String idCapteur = readRequiredString("ID du capteur: ");
+        double valeur    = readDouble("Valeur mesuree: ");
+        String unite     = readRequiredString("Unite (ex: C, %, mg/L): ");
+        String date      = readDateReleve("Date (AAAA-MM-JJ-HHh): ");
+        ferme.enregistrerReleve(idCapteur, new ReleveNumerique(valeur, unite, date, idCapteur));
+        System.out.println("Releve enregistre.");
+    }
 
-        // Acquitter une alerte
-        ferme.acquitterAlerte(1);
-        ferme.afficherAlertesActives();
+    private static void chargerFichiers() {
+        int nb = readInt("Nombre de fichiers: ");
+        String[] chemins = new String[nb];
+        for (int i = 0; i < nb; i++) {
+            chemins[i] = readRequiredString("Fichier " + (i + 1) + ": ");
+        }
+        int total = ferme.chargerRelevesDepuisFichiers(chemins);
+        System.out.println("Releves charges : " + total);
+    }
 
-        // Historique filtré
-        ferme.consulterHistoriqueAlertes("ZC01", null, null, null, null);
-        ferme.consulterHistoriqueAlertes(null, NiveauGravite.CRITIQUE, null, null, null);
+    private static void enregistrerProduction() {
+        String idZone = readRequiredString("ID de la zone: ");
+        double qte    = readDouble("Quantite produite: ");
+        String date   = readDate("Date (AAAA-MM-JJ): ");
+        ferme.enregistrerProduction(idZone, qte, date);
+        System.out.println("Production enregistree.");
+    }
 
-        // ====================== TABLEAUX DE BORD ======================
-        System.out.println("\n>>>>> TABLEAUX DE BORD <<<<<");
-        ferme.afficherTableauDeBord("ZC01");
-        ferme.afficherTableauDeBord("ZE01");
-        ferme.afficherTableauDeBord("ZA01");
+    private static void consulterProduction() {
+        String idZone = readRequiredString("ID de la zone: ");
+        String debut  = readDate("Date debut (AAAA-MM-JJ): ");
+        String fin    = readDate("Date fin   (AAAA-MM-JJ): ");
+        ferme.afficherProductionParPlageDate(idZone, debut, fin);
+    }
 
-        // ====================== GRAPHIQUES ======================
-        System.out.println("\n>>>>> VISUALISATION GRAPHIQUE <<<<<");
-        ferme.afficherGraphiqueEvolution("ENV01");
-        ferme.afficherGraphiqueEvolution("SOL01");
-        ferme.afficherGraphiqueEvolution("BIO01");
+    // =========================================================================
+    //  7. ALERTES
+    // =========================================================================
 
-        // ====================== SUSPENSION DE ZONE ======================
-        System.out.println("\n>>>>> TEST SUSPENSION DE ZONE <<<<<\n");
-        ferme.suspendreZone("ZC01");
-        // Tentative de relevé sur zone suspendue : le capteur ne lit rien et aucune alerte n'est générée.
-        ferme.enregistrerReleve("ENV01", new ReleveNumerique(30.0, "°C", "2026-04-30-10h", "ENV01"));
-        // Réactivation
-        ferme.activerZone("ZC01");
-        ferme.enregistrerReleve("ENV01", new ReleveNumerique(27.0, "°C", "2026-04-30-11h", "ENV01"));
+    private static void menuAlertes() {
+        requireFerme();
+        boolean back = false;
+        while (!back) {
+            printMenu("Alertes",
+                    "1. Panneau d'alertes (toutes)",
+                    "2. Alertes actives seulement",
+                    "3. Trier par gravite",
+                    "4. Acquitter une alerte",
+                    "5. Historique filtre par zone",
+                    "6. Historique filtre par gravite",
+                    "0. Retour");
 
-        // ====================== DÉTAILS PAR ZONE ======================
-        System.out.println("\n>>>>> DÉTAILS DE CHAQUE ZONE <<<<<\n");
-        zc1.afficherDetails();
+            try {
+                switch (readInt("Choix: ")) {
+                    case 1: ferme.afficherPanneauAlertes();  break;
+                    case 2: ferme.afficherAlertesActives();  break;
+                    case 3: {
+                        ferme.afficherAlertesTrierParGravite();
+                        break;
+                    }
+                    case 4: {
+                        int id = readInt("ID de l'alerte: ");
+                        ferme.acquitterAlerte(id);
+                        break;
+                    }
+                    case 5: {
+                        String idZone = readRequiredString("ID de la zone: ");
+                        ferme.consulterHistoriqueAlertes(idZone, null, null, null, null);
+                        break;
+                    }
+                    case 6: {
+                        NiveauGravite g = readEnum("Niveau de gravite", NiveauGravite.class);
+                        ferme.consulterHistoriqueAlertes(null, g, null, null, null);
+                        break;
+                    }
+                    case 0: back = true; break;
+                    default: System.out.println("Choix inconnu.");
+                }
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                System.out.println("Erreur : " + e.getMessage());
+            }
+        }
+    }
+
+    // =========================================================================
+    //  8. TABLEAUX DE BORD
+    // =========================================================================
+
+    private static void menuDashboard() {
+        requireFerme();
+        boolean back = false;
+        while (!back) {
+            printMenu("Tableaux de bord",
+                    "1. Tableau de bord d'une zone",
+                    "2. Details d'une zone",
+                    "0. Retour");
+
+            try {
+                switch (readInt("Choix: ")) {
+                    case 1: {
+                        String id = readRequiredString("ID de la zone: ");
+                        ferme.afficherTableauDeBord(id);
+                        break;
+                    }
+                    case 2: {
+                        Zone z = choisirZone();
+                        z.afficherDetails();
+                        break;
+                    }
+                    case 0: back = true; break;
+                    default: System.out.println("Choix inconnu.");
+                }
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                System.out.println("Erreur : " + e.getMessage());
+            }
+        }
+    }
+
+    // =========================================================================
+    //  9. SUSPENSION / ACTIVATION
+    // =========================================================================
+
+    private static void menuSuspension() {
+        requireFerme();
+        boolean back = false;
+        while (!back) {
+            printMenu("Suspension / Activation",
+                    "1. Suspendre une zone",
+                    "2. Activer une zone",
+                    "0. Retour");
+
+            try {
+                switch (readInt("Choix: ")) {
+                    case 1: {
+                        String id = readRequiredString("ID de la zone a suspendre: ");
+                        ferme.suspendreZone(id);
+                        System.out.println("Zone suspendue.");
+                        break;
+                    }
+                    case 2: {
+                        String id = readRequiredString("ID de la zone a activer: ");
+                        ferme.activerZone(id);
+                        System.out.println("Zone activee.");
+                        break;
+                    }
+                    case 0: back = true; break;
+                    default: System.out.println("Choix inconnu.");
+                }
+            } catch (IllegalArgumentException | IllegalStateException e) {
+                System.out.println("Erreur : " + e.getMessage());
+            }
+        }
+    }
+
+    private static void chargerDonneesGlobales() {
+        requireFerme();
+        String fichier = readRequiredString("Chemin du fichier de donnees: ");
+        int total = ImporteurDonnees.chargerDepuisFichier(ferme, fichier);
+        System.out.println("Donnees chargees : " + total);
+    }
+
+    // =========================================================================
+    //  HELPERS — NAVIGATION
+    // =========================================================================
+
+    private static Zone choisirZone() {
+        String id = readRequiredString("ID de la zone: ");
+        Zone z = ferme.getZoneById(id);
+        if (z == null) {
+            throw new IllegalArgumentException("Zone introuvable : " + id);
+        }
+        return z;
+    }
+
+    // =========================================================================
+    //  HELPERS — SAISIE
+    // =========================================================================
+
+    private static String readRequiredString(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String value = scanner.nextLine().trim();
+            if (!value.isEmpty()) return value;
+            System.out.println("Ce champ est obligatoire.");
+        }
+    }
+
+    private static String readOptionalString(String label) {
+        System.out.print(label + " (vide = tous): ");
+        String value = scanner.nextLine().trim();
+        return value.isEmpty() ? null : value;
+    }
+
+    private static String readDate(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String value = scanner.nextLine().trim();
+            try {
+                return ValidationUtils.validerDateSimple(value, "Date");
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    private static String readDateReleve(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            String value = scanner.nextLine().trim();
+            try {
+                return ValidationUtils.validerDateReleve(value, "Date de relevé");
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    private static double[] readDoubleRange(String promptMin, String promptMax, String label) {
+        while (true) {
+            double min = readDouble(promptMin);
+            double max = readDouble(promptMax);
+            try {
+                ValidationUtils.validerBornes(min, max, label + " minimum", label + " maximum");
+                return new double[] { min, max };
+            } catch (IllegalArgumentException e) {
+                System.out.println(e.getMessage());
+            }
+        }
+    }
+
+    private static int readInt(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                return Integer.parseInt(scanner.nextLine().trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Entier attendu.");
+            }
+        }
+    }
+
+    private static double readDouble(String prompt) {
+        while (true) {
+            System.out.print(prompt);
+            try {
+                return Double.parseDouble(scanner.nextLine().trim().replace(',', '.'));
+            } catch (NumberFormatException e) {
+                System.out.println("Nombre decimal attendu (ex: 36.5).");
+            }
+        }
+    }
+
+    /** Affiche les choix d'un enum avec un numéro à sélectionner. */
+    private static <T extends Enum<T>> T readEnum(String label, Class<T> enumType) {
+        while (true) {
+            printEnumChoices(label, enumType);
+            try {
+                int choix = Integer.parseInt(scanner.nextLine().trim());
+                T[] values = enumType.getEnumConstants();
+                if (choix >= 1 && choix <= values.length) {
+                    return values[choix - 1];
+                }
+                System.out.println("Choix invalide.");
+            } catch (IllegalArgumentException e) {
+                System.out.println("Nombre attendu.");
+            }
+        }
+    }
+
+    private static <T extends Enum<T>> void printEnumChoices(String label, Class<T> enumType) {
+        T[] values = enumType.getEnumConstants();
+        System.out.println(label + " :");
+        for (int i = 0; i < values.length; i++) {
+            System.out.println("  [" + (i + 1) + "] " + values[i].name());
+        }
+        System.out.print("Votre choix: ");
+    }
+
+    // =========================================================================
+    //  HELPERS — AFFICHAGE
+    // =========================================================================
+
+    private static void printMenu(String title, String... options) {
+        int width = Math.max(38, title.length() + 6);
+        String border = repeat("=", width);
         System.out.println();
-        ze1.afficherDetails();
-        System.out.println();
-        za1.afficherDetails();
+        System.out.println(border);
+        System.out.println(center(title, width));
+        System.out.println(border);
+        for (String opt : options) {
+            System.out.println(opt);
+        }
+        System.out.println(border);
+    }
 
-        // ====================== VUE FINALE ======================
-        ferme.afficherVueEnsembleZones();
+    private static String center(String text, int width) {
+        int left  = Math.max(0, (width - text.length()) / 2);
+        int right = Math.max(0, width - text.length() - left);
+        return repeat(" ", left) + text + repeat(" ", right);
+    }
 
-        System.out.println("\n============================================================");
-        System.out.println("              FIN DE LA SIMULATION");
-        System.out.println("============================================================");
+    private static String repeat(String s, int n) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < n; i++) sb.append(s);
+        return sb.toString();
     }
 }

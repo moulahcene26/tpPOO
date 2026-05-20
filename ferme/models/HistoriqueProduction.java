@@ -1,5 +1,6 @@
 package ferme.models;
 
+import ferme.ValidationUtils;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class HistoriqueProduction {
     }
 
     public boolean ajouterEntree(String date, double valeur) {
-        dates.add(date);
+        dates.add(ValidationUtils.validerDateSimple(date, "date de production"));
         valeurs.add(valeur);
         return true;
     }

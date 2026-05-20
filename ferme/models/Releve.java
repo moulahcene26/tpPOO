@@ -1,5 +1,6 @@
 package ferme.models;
 
+import ferme.ValidationUtils;
 import ferme.enums.NiveauGravite;
 
 public abstract class Releve {
@@ -8,7 +9,7 @@ public abstract class Releve {
     private NiveauGravite niveau;
 
     protected Releve(String date, String codeCapteur) {
-        this.date = date;
+        this.date = ValidationUtils.validerDateReleve(date, "date de relevé");
         this.codeCapteur = codeCapteur;
         this.niveau = NiveauGravite.NORMAL;
     }

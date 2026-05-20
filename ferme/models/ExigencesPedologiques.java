@@ -1,5 +1,7 @@
 package ferme.models;
 
+import ferme.ValidationUtils;
+
 public class ExigencesPedologiques {
     private double phMin;
     private double phMax;
@@ -7,6 +9,8 @@ public class ExigencesPedologiques {
     private double humiditeMax;
 
     public ExigencesPedologiques(double phMin, double phMax, double humiditeMin, double humiditeMax) {
+        ValidationUtils.validerBornes(phMin, phMax, "pH minimum", "pH maximum");
+        ValidationUtils.validerBornes(humiditeMin, humiditeMax, "humidité minimum", "humidité maximum");
         this.phMin = phMin;
         this.phMax = phMax;
         this.humiditeMin = humiditeMin;

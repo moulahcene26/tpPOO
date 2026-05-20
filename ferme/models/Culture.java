@@ -1,5 +1,6 @@
 package ferme.models;
 
+import ferme.ValidationUtils;
 import ferme.enums.FamilleCulture;
 import ferme.enums.StadeCroissance;
 
@@ -15,8 +16,11 @@ public class Culture {
                    String dateRecoltePrevue, ExigencesPedologiques exigences) {
         this.nom = nom;
         this.famille = famille;
-        this.datePlantation = datePlantation;
-        this.dateRecoltePrevue = dateRecoltePrevue;
+        this.datePlantation = ValidationUtils.validerDateSimple(datePlantation, "date de plantation");
+        this.dateRecoltePrevue = ValidationUtils.validerDateSimple(dateRecoltePrevue, "date de récolte prévue");
+        if (this.dateRecoltePrevue.compareTo(this.datePlantation) < 0) {
+            throw new IllegalArgumentException("La date de récolte prévue doit être postérieure à la date de plantation.");
+        }
         this.stadeActuel = StadeCroissance.SEMIS;
         this.exigences = exigences;
     }
@@ -31,5 +35,9 @@ public class Culture {
     public void setStadeActuel(StadeCroissance stade) { this.stadeActuel = stade; }
     public void setDateRecoltePrevue(String date) { this.dateRecoltePrevue = date; }
 
- 
+    @Override
+    public String toString() {
+        return nom + " (" + famille.getLibelle() + ") | Stade: " + stadeActuel.getLibelle() 
+             + " | Récolte: " + dateRecoltePrevue;
+    }
 }

@@ -1,0 +1,37 @@
+# Format des lignes :
+# FERME;Nom de la ferme
+# ZONE_CULTURE;code;nom
+# ZONE_ELEVAGE;code;nom;TypeElevage;latitude;longitude;surface
+# ZONE_AQUACOLE;code;nom
+# CULTURE;codeZone;nom;FamilleCulture;datePlantation;dateRecolte;phMin;phMax;humMin;humMax
+# ANIMAL;codeZone;numero;espece;TypeElevage;age;poids;EtatSante
+# CAPTEUR_ENV;code;codeZone;TypeCapteurEnv;seuilMin;seuilMax
+# CAPTEUR_SOL;code;codeZone;TypeCapteurSol;seuilMin;seuilMax
+# CAPTEUR_BIO;code;codeZone;TypeCapteurBio;seuilMin;seuilMax;numeroAnimal
+# CAPTEUR_GPS;code;codeZone;numeroAnimal;latitude;longitude;rayon
+# CAPTEUR_EAU;code;codeZone;TypeCapteurEau;seuilMin;seuilMax
+
+FERME;Ferme El-Djazaïr
+ZONE_CULTURE;ZC01;Champ Nord - Céréales
+ZONE_CULTURE;ZC02;Parcelle Sud - Maraîchage
+ZONE_ELEVAGE;ZE01;Pâturage Est - Bovins;RUMINANT;36.75;2.85;500
+ZONE_ELEVAGE;ZE02;Poulailler Central;VOLAILLE;36.76;2.86;100
+ZONE_AQUACOLE;ZA01;Bassin Aquacole
+
+CULTURE;ZC01;Blé dur;CEREALE;2025-10-15;2026-06-20;6.0;7.5;40;60
+CULTURE;ZC01;Maïs;CEREALE;2026-03-01;2026-09-15;5.5;7.0;50;70
+CULTURE;ZC02;Tomate;LEGUME;2026-03-15;2026-08-30;6.0;6.8;55;75
+CULTURE;ZC02;Olivier;FRUIT;2025-01-01;2025-11-15;6.5;8.0;30;50
+
+ANIMAL;ZE01;1;Vache;RUMINANT;5;650.0;SAIN
+ANIMAL;ZE01;2;Vache;RUMINANT;3;580.0;MALADE
+ANIMAL;ZE01;3;Mouton;RUMINANT;2;45.0;SAIN
+ANIMAL;ZE02;101;Poulet;VOLAILLE;1;2.5;SAIN
+ANIMAL;ZE02;102;Dinde;VOLAILLE;1;8.0;SAIN
+
+CAPTEUR_ENV;ENV01;ZC01;TEMPERATURE;10;35
+CAPTEUR_SOL;SOL01;ZC01;PH;5.5;7.5
+CAPTEUR_BIO;BIO01;ZE01;TEMPERATURE_CORPORELLE;37.5;39.5;2
+CAPTEUR_GPS;GPS01;ZE01;1;36.75;2.85;500
+CAPTEUR_EAU;EAU01;ZA01;TEMPERATURE_EAU;18;28
+CAPTEUR_EAU;EAU02;ZA01;OXYGENE_DISSOUS;3;8

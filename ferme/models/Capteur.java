@@ -1,5 +1,6 @@
 package ferme.models;
 
+import ferme.ValidationUtils;
 import ferme.enums.StatutCapteur;
 import ferme.enums.NiveauGravite;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ public abstract class Capteur {
     protected List<Releve> releves;
 
     public Capteur(String code, String codeZone, double seuilMin, double seuilMax) {
+        ValidationUtils.validerBornes(seuilMin, seuilMax, "seuil minimum", "seuil maximum");
         this.code = code;
         this.codeZone = codeZone;
         this.statut = StatutCapteur.ACTIF;
@@ -91,67 +93,7 @@ public abstract class Capteur {
         }
     }
 
-    public void afficherGraphique() {
-        System.out.println("\n  === Graphique d'évolution : Capteur " + code + " (" + getTypeCapteur() + ") ===");
-        if (releves.size() == 0) {
-            System.out.println("    Aucun relevé enregistré.");
-            return;
-        }
 
-        int premierNumerique = -1;
-        for (int i = 0; i < releves.size(); i++) {
-            if (!releves.get(i).estGPS()) {
-                premierNumerique = i;
-                break;
-            }
-        }
-        if (premierNumerique == -1) {
-            System.out.println("    Aucun relevé numérique à afficher.");
-            return;
-        }
-
-        double max = releves.get(premierNumerique).getValeur();
-        double min = releves.get(premierNumerique).getValeur();
-        for (int i = premierNumerique + 1; i < releves.size(); i++) {
-            if (releves.get(i).estGPS()) continue;
-            if (releves.get(i).getValeur() > max) max = releves.get(i).getValeur();
-            if (releves.get(i).getValeur() < min) min = releves.get(i).getValeur();
-        }
-
-        System.out.println("    Seuils : [" + seuilMin + " - " + seuilMax + "]");
-        System.out.println("    Plage relevée : [" + min + " - " + max + "]");
-        int largeur = 40;
-        double plage = max - min;
-        if (plage == 0) plage = 1;
-
-        for (int i = 0; i < releves.size(); i++) {
-            if (releves.get(i).estGPS()) continue;
-            double val = releves.get(i).getValeur();
-            int pos = (int) ((val - min) / plage * largeur);
-            if (pos < 0) pos = 0;
-            if (pos > largeur) pos = largeur;
-
-            String indicateur;
-            switch (releves.get(i).getNiveau()) {
-                case CRITIQUE:
-                    indicateur = "!!! ";
-                    break;
-                case AVERTISSEMENT:
-                    indicateur = " !  ";
-                    break;
-                default:
-                    indicateur = " .  ";
-                    break;
-            }
-
-            StringBuilder barre = new StringBuilder();
-            for (int j = 0; j < largeur; j++) {
-                barre.append(j == pos ? "#" : "-");
-            }
-            System.out.println("    " + releves.get(i).getDate() + " " + indicateur
-                    + "|" + barre + "| " + val + " " + getUnite());
-        }
-    }
 
     public String toString() {
         return "Capteur " + code + " [" + getTypeCapteur() + "] | Zone: " + codeZone

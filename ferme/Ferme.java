@@ -3,7 +3,12 @@ package ferme;
 import ferme.enums.*;
 import ferme.interfaces.*;
 import ferme.models.*;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, IGestionCapteurs, IGestionAlertes {
@@ -13,8 +18,7 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
     private String nomFerme;
     private Map<String, Zone> zones;
     private Map<String, Capteur> capteurs;
-    private Alerte[] alertes;
-    private int nbAlertes;
+    private List<Alerte> alertes;
 
     private static final String ANSI_RESET = "[0m";
     private static final String ANSI_VERT = "[32m";
@@ -25,8 +29,7 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         this.nomFerme = nomFerme;
         this.zones = new HashMap<>();
         this.capteurs = new HashMap<>();
-        this.alertes = new Alerte[MAX_ALERTES];
-        this.nbAlertes = 0;
+        this.alertes = new ArrayList<>();
     }
 
     public String getNomFerme() { return nomFerme; }
@@ -90,6 +93,11 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         return zones.get(codeZone);
     }
 
+    // Compatibilité : méthode d'accès par ID attendue par certains appels (Main.java)
+    public Zone getZoneById(String id) {
+        return rechercherZone(id);
+    }
+
     public boolean affecterCultureAZone(String codeZone, Culture culture) {
         Zone zone = rechercherZone(codeZone);
         if (zone == null) {
@@ -145,6 +153,29 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         System.out.println("Production enregistrée pour la zone " + codeZone + " : " + valeur + " le " + date);
     }
 
+    public void afficherProductionParPlageDate(String codeZone, String dateDebut, String dateFin) {
+        Zone zone = rechercherZone(codeZone);
+        if (zone == null) {
+            System.out.println("Erreur : zone " + codeZone + " introuvable.");
+            return;
+        }
+        HistoriqueProduction historique = zone.getHistoriqueProduction();
+        System.out.println("\n--- Production filtrée - Zone " + codeZone + " ---");
+        boolean found = false;
+        for (int i = 0; i < historique.getNbEntrees(); i++) {
+            String date = historique.getDate(i);
+            if ((dateDebut == null || date.compareTo(dateDebut) >= 0)
+                    && (dateFin == null || date.compareTo(dateFin) <= 0)) {
+                System.out.println("  " + date + " : " + historique.getValeur(i)
+                        + " " + historique.getUnite());
+                found = true;
+            }
+        }
+        if (!found) {
+            System.out.println("  Aucune production dans cette plage de dates.");
+        }
+    }
+
     // ======================== IGestionCultures ========================
 
     public boolean enregistrerCulture(Culture culture) {
@@ -196,6 +227,39 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         ((ZoneCulture) zone).genererRapport();
     }
 
+    public void afficherCulturesParFamille(String codeZone, FamilleCulture famille) {
+        if (famille == null) {
+            System.out.println("Erreur : famille de culture non spécifiée.");
+            return;
+        }
+
+        System.out.println("\n--- Cultures filtrées par famille : " + famille.getLibelle() + " ---");
+        boolean found = false;
+
+        for (Zone z : zones.values()) {
+            if (!(z instanceof ZoneCulture)) {
+                continue;
+            }
+            if (codeZone != null && !z.getCode().equals(codeZone)) {
+                continue;
+            }
+
+            ZoneCulture zc = (ZoneCulture) z;
+            for (int i = 0; i < zc.getNbCultures(); i++) {
+                Culture c = zc.getCulture(i);
+                if (c.getFamille() == famille) {
+                    System.out.println("  Zone " + zc.getCode() + " - " + c.getNom()
+                            + " | Stade: " + c.getStadeActuel().getLibelle());
+                    found = true;
+                }
+            }
+        }
+
+        if (!found) {
+            System.out.println("  Aucune culture trouvée pour cette famille.");
+        }
+    }
+
     // ======================== IGestionAnimaux ========================
 
     public boolean enregistrerAnimal(Animal animal) {
@@ -242,6 +306,36 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
             return false;
         }
         return animal.enregistrerPoids(date, nouveauPoids);
+    }
+
+    public void afficherAnimauxParEtatSante(String codeZone, EtatSante etat) {
+        if (etat == null) {
+            System.out.println("Erreur : état de santé non spécifié.");
+            return;
+        }
+
+        System.out.println("\n--- Animaux filtrés par état : " + etat.getLibelle() + " ---");
+        boolean auMoinsUneZone = false;
+
+        for (Zone z : zones.values()) {
+            if (!(z instanceof ZoneElevage)) {
+                continue;
+            }
+            if (codeZone != null && !z.getCode().equals(codeZone)) {
+                continue;
+            }
+            auMoinsUneZone = true;
+            System.out.println(" Zone " + z.getCode() + " - " + z.getNom());
+            ((ZoneElevage) z).afficherAnimauxParEtatSante(etat);
+        }
+
+        if (!auMoinsUneZone) {
+            if (codeZone == null) {
+                System.out.println("  Aucune zone d'élevage disponible.");
+            } else {
+                System.out.println("  Zone d'élevage " + codeZone + " introuvable.");
+            }
+        }
     }
 
     public void afficherProgrammeAlimentation(String codeZone) {
@@ -311,6 +405,199 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         return true;
     }
 
+    public int chargerCapteursDepuisFichier(String cheminFichier) {
+        int nbLus = 0;
+        int nbAcceptes = 0;
+        int nbErreurs = 0;
+
+        System.out.println("\n--- Chargement des capteurs depuis : " + cheminFichier + " ---");
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(cheminFichier))) {
+            String ligne;
+            int numeroLigne = 0;
+
+            while ((ligne = reader.readLine()) != null) {
+                numeroLigne++;
+                String brute = ligne.trim();
+
+                if (brute.isEmpty() || brute.startsWith("#")) {
+                    continue;
+                }
+
+                nbLus++;
+                String[] morceaux = brute.split(";");
+                if (morceaux.length < 6) {
+                    System.out.println("  Ligne " + numeroLigne + " ignorée (format invalide) : " + brute);
+                    nbErreurs++;
+                    continue;
+                }
+
+                String type = morceaux[0].trim().toUpperCase();
+                String code = morceaux[1].trim();
+
+                try {
+                    Capteur capteur = construireCapteurDepuisLigne(type, code, morceaux);
+                    if (capteur == null) {
+                        System.out.println("  Ligne " + numeroLigne + " ignorée (type inconnu) : " + brute);
+                        nbErreurs++;
+                        continue;
+                    }
+
+                    if (ajouterCapteur(capteur)) {
+                        nbAcceptes++;
+                    } else {
+                        nbErreurs++;
+                    }
+                } catch (RuntimeException e) {
+                    System.out.println("  Ligne " + numeroLigne + " ignorée (" + e.getMessage() + ") : " + brute);
+                    nbErreurs++;
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Erreur de lecture du fichier \"" + cheminFichier + "\" : " + e.getMessage());
+            return 0;
+        }
+
+        System.out.println("  Lignes de données : " + nbLus
+                + " | Capteurs enregistrés : " + nbAcceptes
+                + " | Erreurs : " + nbErreurs);
+        return nbAcceptes;
+    }
+
+    public int chargerCapteursDepuisFichiers(String[] cheminsFichiers) {
+        int total = 0;
+        if (cheminsFichiers == null) {
+            return total;
+        }
+        for (int i = 0; i < cheminsFichiers.length; i++) {
+            if (cheminsFichiers[i] == null || cheminsFichiers[i].trim().isEmpty()) {
+                continue;
+            }
+            total += chargerCapteursDepuisFichier(cheminsFichiers[i].trim());
+        }
+        return total;
+    }
+
+    private Capteur construireCapteurDepuisLigne(String type, String code, String[] morceaux) {
+        if ("ENV".equals(type) || "ENVIRONNEMENTAL".equals(type)) {
+            double seuilMin = Double.parseDouble(morceaux[3].trim());
+            double seuilMax = Double.parseDouble(morceaux[4].trim());
+            TypeCapteurEnv sousType = TypeCapteurEnv.valueOf(morceaux[5].trim().toUpperCase());
+            return new CapteurEnvironnemental(code, morceaux[2].trim(), seuilMin, seuilMax, sousType);
+        }
+        if ("SOL".equals(type)) {
+            double seuilMin = Double.parseDouble(morceaux[3].trim());
+            double seuilMax = Double.parseDouble(morceaux[4].trim());
+            TypeCapteurSol sousType = TypeCapteurSol.valueOf(morceaux[5].trim().toUpperCase());
+            return new CapteurSol(code, morceaux[2].trim(), seuilMin, seuilMax, sousType);
+        }
+        if ("BIO".equals(type)) {
+            double seuilMin = Double.parseDouble(morceaux[3].trim());
+            double seuilMax = Double.parseDouble(morceaux[4].trim());
+            TypeCapteurBio sousType = TypeCapteurBio.valueOf(morceaux[5].trim().toUpperCase());
+            int numeroAnimal = Integer.parseInt(morceaux[6].trim());
+            return new CapteurBiometrique(code, morceaux[2].trim(), seuilMin, seuilMax, sousType, numeroAnimal);
+        }
+        if ("GPS".equals(type)) {
+            int numeroAnimal = Integer.parseInt(morceaux[3].trim());
+            double latitude = Double.parseDouble(morceaux[4].trim());
+            double longitude = Double.parseDouble(morceaux[5].trim());
+            double rayon = Double.parseDouble(morceaux[6].trim());
+            return new CapteurGPS(code, morceaux[2].trim(), numeroAnimal, latitude, longitude, rayon);
+        }
+        if ("EAU".equals(type)) {
+            double seuilMin = Double.parseDouble(morceaux[3].trim());
+            double seuilMax = Double.parseDouble(morceaux[4].trim());
+            TypeCapteurEau sousType = TypeCapteurEau.valueOf(morceaux[5].trim().toUpperCase());
+            return new CapteurEau(code, morceaux[2].trim(), seuilMin, seuilMax, sousType);
+        }
+        return null;
+    }
+
+    public int chargerRelevesDepuisFichier(String cheminFichier) {
+        int nbLus = 0;
+        int nbAcceptes = 0;
+        int nbErreurs = 0;
+
+        System.out.println("\n--- Chargement des relevés depuis : " + cheminFichier + " ---");
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(cheminFichier))) {
+            String ligne;
+            int numeroLigne = 0;
+
+            while ((ligne = reader.readLine()) != null) {
+                numeroLigne++;
+                String brute = ligne.trim();
+
+                if (brute.isEmpty() || brute.startsWith("#")) {
+                    continue;
+                }
+
+                nbLus++;
+                String[] morceaux = brute.split(";");
+                if (morceaux.length < 5) {
+                    System.out.println("  Ligne " + numeroLigne + " ignorée (format invalide) : " + brute);
+                    nbErreurs++;
+                    continue;
+                }
+
+                String type = morceaux[0].trim().toUpperCase();
+                String codeCapteur = morceaux[1].trim();
+
+                try {
+                    boolean ok;
+                    if ("NUM".equals(type)) {
+                        double valeur = Double.parseDouble(morceaux[2].trim());
+                        String unite = morceaux[3].trim();
+                        String date = ValidationUtils.validerDateReleve(morceaux[4].trim(), "date de relevé");
+                        ok = enregistrerReleve(codeCapteur, new ReleveNumerique(valeur, unite, date, codeCapteur));
+                    } else if ("GPS".equals(type)) {
+                        double latitude = Double.parseDouble(morceaux[2].trim());
+                        double longitude = Double.parseDouble(morceaux[3].trim());
+                        String date = ValidationUtils.validerDateReleve(morceaux[4].trim(), "date de relevé");
+                        ok = enregistrerReleve(codeCapteur,
+                                new ReleveGPS(new PositionGPS(latitude, longitude), date, codeCapteur));
+                    } else {
+                        System.out.println("  Ligne " + numeroLigne + " ignorée (type inconnu) : " + brute);
+                        nbErreurs++;
+                        continue;
+                    }
+
+                    if (ok) {
+                        nbAcceptes++;
+                    } else {
+                        nbErreurs++;
+                    }
+                } catch (RuntimeException e) {
+                    System.out.println("  Ligne " + numeroLigne + " ignorée (" + e.getMessage() + ") : " + brute);
+                    nbErreurs++;
+                }
+            }
+        } catch (IOException e) {
+            System.out.println("Erreur de lecture du fichier \"" + cheminFichier + "\" : " + e.getMessage());
+            return 0;
+        }
+
+        System.out.println("  Lignes de données : " + nbLus
+                + " | Relevés enregistrés : " + nbAcceptes
+                + " | Erreurs : " + nbErreurs);
+        return nbAcceptes;
+    }
+
+    public int chargerRelevesDepuisFichiers(String[] cheminsFichiers) {
+        int total = 0;
+        if (cheminsFichiers == null) {
+            return total;
+        }
+        for (int i = 0; i < cheminsFichiers.length; i++) {
+            if (cheminsFichiers[i] == null || cheminsFichiers[i].trim().isEmpty()) {
+                continue;
+            }
+            total += chargerRelevesDepuisFichier(cheminsFichiers[i].trim());
+        }
+        return total;
+    }
+
     public void afficherTableauDeBord(String codeZone) {
         System.out.println("\n╔══════════════════════════════════════════════════════════╗");
         System.out.println("║  TABLEAU DE BORD DES CAPTEURS - Zone " + codeZone);
@@ -371,24 +658,6 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         return ok;
     }
 
-    public void afficherGraphiqueEvolution(String codeCapteur) {
-        Capteur capteur = rechercherCapteur(codeCapteur);
-        if (capteur == null) {
-            System.out.println("Erreur : capteur " + codeCapteur + " introuvable.");
-            return;
-        }
-        capteur.afficherGraphique();
-    }
-
-    public void afficherGraphiqueParZone(String codeZone) {
-        System.out.println("\n=== GRAPHIQUES D'ÉVOLUTION - Zone " + codeZone + " ===");
-        for (Capteur c : capteurs.values()) {
-            if (c.getCodeZone().equals(codeZone)) {
-                c.afficherGraphique();
-            }
-        }
-    }
-
     private Capteur rechercherCapteur(String codeCapteur) {
         return capteurs.get(codeCapteur);
     }
@@ -441,13 +710,12 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
     }
 
     private void genererAlerte(Releve releve, Capteur capteur) {
-        if (nbAlertes >= MAX_ALERTES) {
+        if (alertes.size() >= MAX_ALERTES) {
             System.out.println("Attention : nombre maximal d'alertes atteint.");
             return;
         }
         Alerte alerte = new Alerte(releve, releve.getNiveau(), capteur.getCodeZone());
-        alertes[nbAlertes] = alerte;
-        nbAlertes++;
+        alertes.add(alerte);
         System.out.println("  >> ALERTE GÉNÉRÉE : " + alerte);
     }
 
@@ -459,28 +727,20 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         System.out.println("╠══════════════════════════════════════════════════════════════╣");
 
         boolean aAlerte = false;
-        for (int i = 0; i < nbAlertes; i++) {
-            if (!alertes[i].estAcquittee() && alertes[i].getNiveau() == NiveauGravite.CRITIQUE) {
-                System.out.println("║  " + alertes[i]);
-                aAlerte = true;
-            }
+        for (int i = 0; i < alertes.size(); i++) {
+            System.out.println("║  " + alertes.get(i));
+            aAlerte = true;
         }
-        for (int i = 0; i < nbAlertes; i++) {
-            if (!alertes[i].estAcquittee() && alertes[i].getNiveau() == NiveauGravite.AVERTISSEMENT) {
-                System.out.println("║  " + alertes[i]);
-                aAlerte = true;
-            }
-        }
-        if (!aAlerte) System.out.println("║  Aucune alerte active.");
+        if (!aAlerte) System.out.println("║  Aucune alerte enregistrée.");
         System.out.println("╚══════════════════════════════════════════════════════════════╝");
     }
 
     public void afficherAlertesActives() {
-        System.out.println("\n--- Alertes actives ---");
+        System.out.println("\n--- Alertes actives uniquement ---");
         boolean found = false;
-        for (int i = 0; i < nbAlertes; i++) {
-            if (!alertes[i].estAcquittee()) {
-                System.out.println("  " + alertes[i]);
+        for (int i = 0; i < alertes.size(); i++) {
+            if (!alertes.get(i).estAcquittee()) {
+                System.out.println("  " + alertes.get(i));
                 found = true;
             }
         }
@@ -488,9 +748,9 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
     }
 
     public boolean acquitterAlerte(int idAlerte) {
-        for (int i = 0; i < nbAlertes; i++) {
-            if (alertes[i].getId() == idAlerte) {
-                alertes[i].acquitter();
+        for (int i = 0; i < alertes.size(); i++) {
+            if (alertes.get(i).getId() == idAlerte) {
+                alertes.get(i).acquitter();
                 System.out.println("Alerte #" + idAlerte + " acquittée.");
                 return true;
             }
@@ -500,13 +760,9 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
     }
 
     public boolean supprimerAlerte(int idAlerte) {
-        for (int i = 0; i < nbAlertes; i++) {
-            if (alertes[i].getId() == idAlerte) {
-                for (int j = i; j < nbAlertes - 1; j++) {
-                    alertes[j] = alertes[j + 1];
-                }
-                alertes[nbAlertes - 1] = null;
-                nbAlertes--;
+        for (int i = 0; i < alertes.size(); i++) {
+            if (alertes.get(i).getId() == idAlerte) {
+                alertes.remove(i);
                 System.out.println("Alerte #" + idAlerte + " supprimée.");
                 return true;
             }
@@ -519,18 +775,18 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
                                             String typeCapteur, String dateDebut, String dateFin) {
         System.out.println("\n--- Historique des alertes (filtré) ---");
         boolean found = false;
-        for (int i = 0; i < nbAlertes; i++) {
+        for (int i = 0; i < alertes.size(); i++) {
             boolean match = true;
-            if (codeZone != null && !alertes[i].getCodeZone().equals(codeZone)) match = false;
-            if (niveau != null && alertes[i].getNiveau() != niveau) match = false;
-            if (dateDebut != null && alertes[i].getDateCreation().compareTo(dateDebut) < 0) match = false;
-            if (dateFin != null && alertes[i].getDateCreation().compareTo(dateFin) > 0) match = false;
+            if (codeZone != null && !alertes.get(i).getCodeZone().equals(codeZone)) match = false;
+            if (niveau != null && alertes.get(i).getNiveau() != niveau) match = false;
+            if (dateDebut != null && alertes.get(i).getDateCreation().compareTo(dateDebut) < 0) match = false;
+            if (dateFin != null && alertes.get(i).getDateCreation().compareTo(dateFin) > 0) match = false;
             if (typeCapteur != null) {
-                Capteur c = rechercherCapteur(alertes[i].getReleve().getCodeCapteur());
+                Capteur c = rechercherCapteur(alertes.get(i).getReleve().getCodeCapteur());
                 if (c == null || !c.getTypeCapteur().contains(typeCapteur)) match = false;
             }
             if (match) {
-                System.out.println("  " + alertes[i]);
+                System.out.println("  " + alertes.get(i));
                 found = true;
             }
         }
@@ -538,19 +794,24 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
     }
 
     public void trierAlertesParGravite() {
-        for (int i = 0; i < nbAlertes - 1; i++) {
+        for (int i = 0; i < alertes.size() - 1; i++) {
             int indexMax = i;
-            for (int j = i + 1; j < nbAlertes; j++) {
-                if (alertes[j].getNiveau().ordinal() > alertes[indexMax].getNiveau().ordinal()) {
+            for (int j = i + 1; j < alertes.size(); j++) {
+                if (alertes.get(j).getNiveau().ordinal() > alertes.get(indexMax).getNiveau().ordinal()) {
                     indexMax = j;
                 }
             }
             if (indexMax != i) {
-                Alerte temp = alertes[i];
-                alertes[i] = alertes[indexMax];
-                alertes[indexMax] = temp;
+                Alerte temp = alertes.get(i);
+                alertes.set(i, alertes.get(indexMax));
+                alertes.set(indexMax, temp);
             }
         }
-        System.out.println("Alertes triées par niveau de gravité (critique en premier).");
+        System.out.println("Alertes triées par niveau de gravité.");
+    }
+
+    public void afficherAlertesTrierParGravite() {
+        trierAlertesParGravite();
+        afficherPanneauAlertes();
     }
 }

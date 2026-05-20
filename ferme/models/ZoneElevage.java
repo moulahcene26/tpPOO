@@ -1,5 +1,6 @@
 package ferme.models;
 
+import ferme.enums.EtatSante;
 import ferme.enums.TypeElevage;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -48,6 +49,18 @@ public class ZoneElevage extends Zone {
     public String getTypeZone() { return "Élevage (" + typeElevage.getLibelle() + ")"; }
 
     public int getNombreEntites() { return animaux.size(); }
+
+    public void afficherAnimauxParEtatSante(EtatSante etat) {
+        int i = 1;
+        for (Animal a : animaux.values()) {
+            if (a.getEtatSante() == etat) {
+                System.out.println("  " + i++ + ". " + a);
+            }
+        }
+        if (i == 1) {
+            System.out.println("  Aucun animal avec l'état " + etat.getLibelle() + ".");
+        }
+    }
 
     public void afficherDetails() {
         System.out.println("=== Zone d'Élevage : " + nom + " (" + code + ") ===");
