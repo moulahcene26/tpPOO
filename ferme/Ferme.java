@@ -1,7 +1,6 @@
 package ferme;
 
 import ferme.enums.*;
-import ferme.interfaces.*;
 import ferme.models.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -11,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, IGestionCapteurs, IGestionAlertes {
+public class Ferme {
 
     public static final int MAX_ALERTES = 500;
 
@@ -34,7 +33,7 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
 
     public String getNomFerme() { return nomFerme; }
 
-    // ======================== IGestionZones ========================
+    // ======================== Gestion des zones ========================
 
     public boolean ajouterZone(Zone zone) {
         if (rechercherZone(zone.getCode()) != null) {
@@ -176,7 +175,7 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         }
     }
 
-    // ======================== IGestionCultures ========================
+    // ======================== Gestion des cultures ========================
 
     public boolean enregistrerCulture(Culture culture) {
         for (Zone z : zones.values()) {
@@ -260,7 +259,7 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         }
     }
 
-    // ======================== IGestionAnimaux ========================
+    // ======================== Gestion des animaux ========================
 
     public boolean enregistrerAnimal(Animal animal) {
         if (rechercherAnimal(animal.getNumero()) != null) {
@@ -368,7 +367,7 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         return null;
     }
 
-    // ======================== IGestionCapteurs ========================
+    // ======================== Gestion des capteurs ========================
 
     public boolean ajouterCapteur(Capteur capteur) {
         if (rechercherCapteur(capteur.getCode()) != null) {
@@ -719,7 +718,7 @@ public class Ferme implements IGestionZones, IGestionCultures, IGestionAnimaux, 
         System.out.println("  >> ALERTE GÉNÉRÉE : " + alerte);
     }
 
-    // ======================== IGestionAlertes ========================
+    // ======================== Gestion des alertes ========================
 
     public void afficherPanneauAlertes() {
         System.out.println("\n╔══════════════════════════════════════════════════════════════╗");
