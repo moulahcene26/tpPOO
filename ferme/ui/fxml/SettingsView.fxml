@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox VBox.vgrow="ALWAYS" fx:controller="ferme.ui.controllers.SettingsController"
+    xmlns:fx="http://javafx.com/fxml" spacing="20" styleClass="page">
+    <VBox spacing="4">
+        <Label text="Settings" styleClass="page-title" />
+        <Label text="Farm configuration and application information" styleClass="farm-name" />
+    </VBox>
+    <VBox spacing="12" styleClass="card">
+        <Label text="Current Farm" styleClass="section-title" />
+        <HBox spacing="12" alignment="CENTER_LEFT">
+            <Label fx:id="currentFarmLabel" text="No farm loaded" styleClass="stat-value" />
+            <Button fx:id="createFarmButton" text="+ New Farm" styleClass="primary-button" />
+            <Button fx:id="clearFarmButton" text="Clear Farm" styleClass="danger-button" />
+        </HBox>
+    </VBox>
+    <VBox spacing="8" styleClass="card">
+        <Label text="About" styleClass="section-title" />
+        <TextArea fx:id="aboutArea" prefRowCount="8" editable="false"
+            styleClass="text-area" />
+    </VBox>
+</VBox>

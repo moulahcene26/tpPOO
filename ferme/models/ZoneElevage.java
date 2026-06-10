@@ -2,7 +2,9 @@ package ferme.models;
 
 import ferme.enums.EtatSante;
 import ferme.enums.TypeElevage;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ZoneElevage extends Zone {
@@ -14,7 +16,7 @@ public class ZoneElevage extends Zone {
     private double rayonZoneMetres;
 
     public ZoneElevage(String code, String nom, TypeElevage typeElevage,
-                       PositionGPS centreZone, double rayonZoneMetres) {
+            PositionGPS centreZone, double rayonZoneMetres) {
         super(code, nom, typeElevage == TypeElevage.RUMINANT ? "litres" : "oeufs");
         this.typeElevage = typeElevage;
         this.animaux = new LinkedHashMap<>();
@@ -36,19 +38,41 @@ public class ZoneElevage extends Zone {
         return animaux.get(numero);
     }
 
-    public int getNbAnimaux() { return animaux.size(); }
-    public TypeElevage getTypeElevage() { return typeElevage; }
-    public ProgrammeAlimentation getProgrammeAlimentation() { return programmeAlimentation; }
-    public PositionGPS getCentreZone() { return centreZone; }
-    public double getRayonZoneMetres() { return rayonZoneMetres; }
+    public int getNbAnimaux() {
+        return animaux.size();
+    }
+
+    public TypeElevage getTypeElevage() {
+        return typeElevage;
+    }
+
+    public ProgrammeAlimentation getProgrammeAlimentation() {
+        return programmeAlimentation;
+    }
+
+    public PositionGPS getCentreZone() {
+        return centreZone;
+    }
+
+    public double getRayonZoneMetres() {
+        return rayonZoneMetres;
+    }
+
+    public List<Animal> getAnimaux() {
+        return new ArrayList<>(animaux.values());
+    }
 
     public void setProgrammeAlimentation(ProgrammeAlimentation programme) {
         this.programmeAlimentation = programme;
     }
 
-    public String getTypeZone() { return "Élevage (" + typeElevage.getLibelle() + ")"; }
+    public String getTypeZone() {
+        return "Élevage (" + typeElevage.getLibelle() + ")";
+    }
 
-    public int getNombreEntites() { return animaux.size(); }
+    public int getNombreEntites() {
+        return animaux.size();
+    }
 
     public void afficherAnimauxParEtatSante(EtatSante etat) {
         int i = 1;

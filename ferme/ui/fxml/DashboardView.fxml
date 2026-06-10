@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox fx:controller="ferme.ui.controllers.DashboardController"
+    xmlns:fx="http://javafx.com/fxml" spacing="22" styleClass="page" VBox.vgrow="ALWAYS">
+
+    <!-- Hero banner: identity on left, live metrics on right -->
+    <HBox fx:id="heroCard" styleClass="hero-card" alignment="CENTER_LEFT" spacing="20">
+        <VBox spacing="6" alignment="CENTER_LEFT">
+            <Label text="FARM OVERVIEW" styleClass="hero-eyebrow" />
+            <Label fx:id="heroFarmName" text="No farm loaded" styleClass="hero-title" />
+            <Label fx:id="heroSubtitle" text="Create or import a farm to begin monitoring" styleClass="hero-subtitle" />
+        </VBox>
+        <Region HBox.hgrow="ALWAYS" />
+        <HBox styleClass="hero-pills" alignment="CENTER_RIGHT">
+            <HBox styleClass="hero-pill">
+                <Label fx:id="pillZones" text="0" styleClass="hero-pill-value" />
+                <Label text="Active Zones" styleClass="hero-pill-label" />
+            </HBox>
+            <HBox styleClass="hero-pill">
+                <Label fx:id="pillSensors" text="0" styleClass="hero-pill-value" />
+                <Label text="Active Sensors" styleClass="hero-pill-label" />
+            </HBox>
+            <HBox styleClass="hero-pill">
+                <Label fx:id="pillAlerts" text="0" styleClass="hero-pill-value" />
+                <Label text="Pending Alerts" styleClass="hero-pill-label" />
+            </HBox>
+        </HBox>
+    </HBox>
+
+    <!-- Metric cards -->
+    <Label text="KEY METRICS" styleClass="section-title" />
+    <FlowPane fx:id="statsContainer" hgap="14" vgap="14" />
+
+    <!-- Tables -->
+    <HBox spacing="14" VBox.vgrow="ALWAYS">
+        <VBox spacing="12" styleClass="card" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+            <Label text="RECENT ALERTS" styleClass="section-title" />
+            <TableView fx:id="alertsTable" VBox.vgrow="ALWAYS" />
+        </VBox>
+        <VBox spacing="12" styleClass="card" HBox.hgrow="ALWAYS" VBox.vgrow="ALWAYS">
+            <Label text="ZONE OVERVIEW" styleClass="section-title" />
+            <TableView fx:id="zonesTable" VBox.vgrow="ALWAYS" />
+        </VBox>
+    </HBox>
+</VBox>

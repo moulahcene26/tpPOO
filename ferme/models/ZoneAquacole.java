@@ -1,4 +1,5 @@
 package ferme.models;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,18 +15,29 @@ public class ZoneAquacole extends Zone {
     }
 
     public boolean ajouterEspece(EspeceAquacole espece) {
-        if (especes.contains(espece)) return false; 
+        if (especes.contains(espece))
+            return false;
         especes.add(espece);
         return true;
     }
 
     public EspeceAquacole getEspece(int index) {
-        if (index >= 0 && index < especes.size()) return especes.get(index);
+        if (index >= 0 && index < especes.size())
+            return especes.get(index);
         return null;
     }
 
-    public int getNbEspeces() { return especes.size(); }
-    public ProgrammeAlimentation getProgrammeAlimentation() { return programmeAlimentation; }
+    public int getNbEspeces() {
+        return especes.size();
+    }
+
+    public ProgrammeAlimentation getProgrammeAlimentation() {
+        return programmeAlimentation;
+    }
+
+    public List<EspeceAquacole> getEspeces() {
+        return new ArrayList<>(especes);
+    }
 
     public void setProgrammeAlimentation(ProgrammeAlimentation programme) {
         this.programmeAlimentation = programme;
@@ -39,9 +51,13 @@ public class ZoneAquacole extends Zone {
         return total;
     }
 
-    public String getTypeZone() { return "Aquacole"; }
+    public String getTypeZone() {
+        return "Aquacole";
+    }
 
-    public int getNombreEntites() { return getNombreTotalAnimaux(); }
+    public int getNombreEntites() {
+        return getNombreTotalAnimaux();
+    }
 
     public void afficherDetails() {
         System.out.println("=== Zone Aquacole : " + nom + " (" + code + ") ===");
@@ -57,4 +73,3 @@ public class ZoneAquacole extends Zone {
         historiqueProduction.afficher();
     }
 }
-

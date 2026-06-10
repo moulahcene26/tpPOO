@@ -31,7 +31,29 @@ public class Ferme {
         this.alertes = new ArrayList<>();
     }
 
-    public String getNomFerme() { return nomFerme; }
+    public String getNomFerme() {
+        return nomFerme;
+    }
+
+    public List<Zone> getZones() {
+        return new ArrayList<>(zones.values());
+    }
+
+    public List<Capteur> getCapteurs() {
+        return new ArrayList<>(capteurs.values());
+    }
+
+    public List<Alerte> getAlertes() {
+        return new ArrayList<>(alertes);
+    }
+
+    public Capteur getCapteur(String codeCapteur) {
+        return capteurs.get(codeCapteur);
+    }
+
+    public Animal getAnimal(int numero) {
+        return rechercherAnimal(numero);
+    }
 
     // ======================== Gestion des zones ========================
 
@@ -92,7 +114,8 @@ public class Ferme {
         return zones.get(codeZone);
     }
 
-    // Compatibilité : méthode d'accès par ID attendue par certains appels (Main.java)
+    // Compatibilité : méthode d'accès par ID attendue par certains appels
+    // (Main.java)
     public Zone getZoneById(String id) {
         return rechercherZone(id);
     }
@@ -108,7 +131,8 @@ public class Ferme {
             return false;
         }
         boolean ok = ((ZoneCulture) zone).ajouterCulture(culture);
-        if (ok) System.out.println("Culture \"" + culture.getNom() + "\" affectée à la zone " + codeZone + ".");
+        if (ok)
+            System.out.println("Culture \"" + culture.getNom() + "\" affectée à la zone " + codeZone + ".");
         return ok;
     }
 
@@ -127,7 +151,8 @@ public class Ferme {
             return false;
         }
         boolean ok = ((ZoneElevage) zone).ajouterAnimal(animal);
-        if (ok) System.out.println("Animal #" + animal.getNumero() + " affecté à la zone " + codeZone + ".");
+        if (ok)
+            System.out.println("Animal #" + animal.getNumero() + " affecté à la zone " + codeZone + ".");
         return ok;
     }
 
@@ -346,12 +371,16 @@ public class Ferme {
         System.out.println("\n--- Programme d'alimentation - Zone " + codeZone + " ---");
         if (zone instanceof ZoneElevage) {
             ProgrammeAlimentation prog = ((ZoneElevage) zone).getProgrammeAlimentation();
-            if (prog != null) System.out.println("  " + prog);
-            else System.out.println("  Aucun programme défini.");
+            if (prog != null)
+                System.out.println("  " + prog);
+            else
+                System.out.println("  Aucun programme défini.");
         } else if (zone instanceof ZoneAquacole) {
             ProgrammeAlimentation prog = ((ZoneAquacole) zone).getProgrammeAlimentation();
-            if (prog != null) System.out.println("  " + prog);
-            else System.out.println("  Aucun programme défini.");
+            if (prog != null)
+                System.out.println("  " + prog);
+            else
+                System.out.println("  Aucun programme défini.");
         } else {
             System.out.println("  Cette zone ne dispose pas de programme d'alimentation.");
         }
@@ -361,7 +390,8 @@ public class Ferme {
         for (Zone z : zones.values()) {
             if (z instanceof ZoneElevage) {
                 Animal a = ((ZoneElevage) z).rechercherAnimalParNumero(numero);
-                if (a != null) return a;
+                if (a != null)
+                    return a;
             }
         }
         return null;
@@ -376,7 +406,8 @@ public class Ferme {
         }
         capteurs.put(capteur.getCode(), capteur);
         Zone z = rechercherZone(capteur.getCodeZone());
-        if (z != null) z.ajouterCapteurAssoc(capteur);
+        if (z != null)
+            z.ajouterCapteurAssoc(capteur);
         System.out.println("Capteur ajouté : " + capteur);
         return true;
     }
@@ -617,7 +648,8 @@ public class Ferme {
                 compteur++;
             }
         }
-        if (compteur == 0) System.out.println("║  Aucun capteur dans cette zone.");
+        if (compteur == 0)
+            System.out.println("║  Aucun capteur dans cette zone.");
         System.out.println("╚══════════════════════════════════════════════════════════╝");
     }
 
@@ -730,7 +762,8 @@ public class Ferme {
             System.out.println("║  " + alertes.get(i));
             aAlerte = true;
         }
-        if (!aAlerte) System.out.println("║  Aucune alerte enregistrée.");
+        if (!aAlerte)
+            System.out.println("║  Aucune alerte enregistrée.");
         System.out.println("╚══════════════════════════════════════════════════════════════╝");
     }
 
@@ -743,7 +776,8 @@ public class Ferme {
                 found = true;
             }
         }
-        if (!found) System.out.println("  Aucune alerte active.");
+        if (!found)
+            System.out.println("  Aucune alerte active.");
     }
 
     public boolean acquitterAlerte(int idAlerte) {
@@ -771,25 +805,31 @@ public class Ferme {
     }
 
     public void consulterHistoriqueAlertes(String codeZone, NiveauGravite niveau,
-                                            String typeCapteur, String dateDebut, String dateFin) {
+            String typeCapteur, String dateDebut, String dateFin) {
         System.out.println("\n--- Historique des alertes (filtré) ---");
         boolean found = false;
         for (int i = 0; i < alertes.size(); i++) {
             boolean match = true;
-            if (codeZone != null && !alertes.get(i).getCodeZone().equals(codeZone)) match = false;
-            if (niveau != null && alertes.get(i).getNiveau() != niveau) match = false;
-            if (dateDebut != null && alertes.get(i).getDateCreation().compareTo(dateDebut) < 0) match = false;
-            if (dateFin != null && alertes.get(i).getDateCreation().compareTo(dateFin) > 0) match = false;
+            if (codeZone != null && !alertes.get(i).getCodeZone().equals(codeZone))
+                match = false;
+            if (niveau != null && alertes.get(i).getNiveau() != niveau)
+                match = false;
+            if (dateDebut != null && alertes.get(i).getDateCreation().compareTo(dateDebut) < 0)
+                match = false;
+            if (dateFin != null && alertes.get(i).getDateCreation().compareTo(dateFin) > 0)
+                match = false;
             if (typeCapteur != null) {
                 Capteur c = rechercherCapteur(alertes.get(i).getReleve().getCodeCapteur());
-                if (c == null || !c.getTypeCapteur().contains(typeCapteur)) match = false;
+                if (c == null || !c.getTypeCapteur().contains(typeCapteur))
+                    match = false;
             }
             if (match) {
                 System.out.println("  " + alertes.get(i));
                 found = true;
             }
         }
-        if (!found) System.out.println("  Aucune alerte correspondant aux critères.");
+        if (!found)
+            System.out.println("  Aucune alerte correspondant aux critères.");
     }
 
     public void trierAlertesParGravite() {

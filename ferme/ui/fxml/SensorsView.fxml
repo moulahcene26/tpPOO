@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox VBox.vgrow="ALWAYS" fx:controller="ferme.ui.controllers.SensorsController"
+    xmlns:fx="http://javafx.com/fxml" spacing="20" styleClass="page">
+    <VBox spacing="4">
+        <Label text="Sensors" styleClass="page-title" />
+        <Label text="Configure and monitor all sensor families" styleClass="farm-name" />
+    </VBox>
+    <HBox spacing="10" styleClass="toolbar">
+        <TextField fx:id="searchField" promptText="Search sensors..." prefWidth="220" />
+        <Button fx:id="addSensorButton" text="+ Add Sensor" styleClass="primary-button" />
+        <Button fx:id="configureSensorButton" text="Configure Thresholds" />
+        <Button fx:id="changeStatusButton" text="Change Status" />
+        <Button fx:id="importSensorsButton" text="Import Sensors" />
+        <Button fx:id="viewHistoryButton" text="View History" />
+    </HBox>
+    <TableView VBox.vgrow="ALWAYS" fx:id="sensorsTable" />
+</VBox>

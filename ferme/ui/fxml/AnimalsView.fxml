@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox VBox.vgrow="ALWAYS" fx:controller="ferme.ui.controllers.AnimalsController"
+    xmlns:fx="http://javafx.com/fxml" spacing="20" styleClass="page">
+    <VBox spacing="4">
+        <Label text="Animals" styleClass="page-title" />
+        <Label text="Manage livestock health, weight, and GPS tracking" styleClass="farm-name" />
+    </VBox>
+    <HBox spacing="10" styleClass="toolbar">
+        <ComboBox fx:id="zoneFilter" promptText="Zone" prefWidth="140" />
+        <ComboBox fx:id="healthFilter" promptText="Health" prefWidth="140" />
+        <Button fx:id="addAnimalButton" text="+ Add Animal" styleClass="primary-button" />
+        <Button fx:id="updateHealthButton" text="Update Health" />
+        <Button fx:id="addEventButton" text="Add Health Event" />
+        <Button fx:id="addWeightButton" text="Record Weight" />
+    </HBox>
+    <TableView VBox.vgrow="ALWAYS" fx:id="animalsTable" />
+</VBox>

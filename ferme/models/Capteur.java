@@ -25,20 +25,57 @@ public abstract class Capteur {
         this.releves = new ArrayList<>();
     }
 
-    public String getCode() { return code; }
-    public String getCodeZone() { return codeZone; }
-    public StatutCapteur getStatut() { return statut; }
-    public double getSeuilMin() { return seuilMin; }
-    public double getSeuilMax() { return seuilMax; }
-    public int getNbReleves() { return releves.size(); }
+    public String getCode() {
+        return code;
+    }
 
-    public void setStatut(StatutCapteur statut) { this.statut = statut; }
-    public void setSeuilMin(double seuilMin) { this.seuilMin = seuilMin; }
-    public void setSeuilMax(double seuilMax) { this.seuilMax = seuilMax; }
-    public void setCodeZone(String codeZone) { this.codeZone = codeZone; }
+    public String getCodeZone() {
+        return codeZone;
+    }
 
-    public void suspendre() { this.statut = StatutCapteur.SUSPENDU; }
-    public void reactiver() { this.statut = StatutCapteur.ACTIF; }
+    public StatutCapteur getStatut() {
+        return statut;
+    }
+
+    public double getSeuilMin() {
+        return seuilMin;
+    }
+
+    public double getSeuilMax() {
+        return seuilMax;
+    }
+
+    public int getNbReleves() {
+        return releves.size();
+    }
+
+    public List<Releve> getReleves() {
+        return new ArrayList<>(releves);
+    }
+
+    public void setStatut(StatutCapteur statut) {
+        this.statut = statut;
+    }
+
+    public void setSeuilMin(double seuilMin) {
+        this.seuilMin = seuilMin;
+    }
+
+    public void setSeuilMax(double seuilMax) {
+        this.seuilMax = seuilMax;
+    }
+
+    public void setCodeZone(String codeZone) {
+        this.codeZone = codeZone;
+    }
+
+    public void suspendre() {
+        this.statut = StatutCapteur.SUSPENDU;
+    }
+
+    public void reactiver() {
+        this.statut = StatutCapteur.ACTIF;
+    }
 
     public NiveauGravite evaluerNiveau(double valeur) {
         if (valeur < seuilMin || valeur > seuilMax) {
@@ -81,6 +118,7 @@ public abstract class Capteur {
     }
 
     public abstract String getTypeCapteur();
+
     public abstract String getUnite();
 
     public void afficherHistorique(String dateDebut, String dateFin) {
@@ -92,8 +130,6 @@ public abstract class Capteur {
             }
         }
     }
-
-
 
     public String toString() {
         return "Capteur " + code + " [" + getTypeCapteur() + "] | Zone: " + codeZone

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox VBox.vgrow="ALWAYS" fx:controller="ferme.ui.controllers.CulturesController"
+    xmlns:fx="http://javafx.com/fxml" spacing="20" styleClass="page">
+    <VBox spacing="4">
+        <Label text="Cultures" styleClass="page-title" />
+        <Label text="Track crops, growth stages, and harvest planning" styleClass="farm-name" />
+    </VBox>
+    <HBox spacing="10" styleClass="toolbar">
+        <ComboBox fx:id="familyFilter" promptText="Filter by family" prefWidth="160" />
+        <Button fx:id="addCultureButton" text="+ Add Crop" styleClass="primary-button" />
+        <Button fx:id="updateStageButton" text="Update Stage" />
+        <Button fx:id="reportButton" text="Generate Report" />
+    </HBox>
+    <TableView VBox.vgrow="ALWAYS" fx:id="culturesTable" />
+</VBox>

@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox VBox.vgrow="ALWAYS" fx:controller="ferme.ui.controllers.ReadingsController"
+    xmlns:fx="http://javafx.com/fxml" spacing="12" styleClass="page">
+    <Label text="Readings &amp; Production" styleClass="page-title" />
+    <TabPane fx:id="readingsTabPane">
+        <Tab text="Numeric Reading">
+            <VBox spacing="12" styleClass="card">
+                <GridPane hgap="12" vgap="10">
+                    <Label text="Sensor" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                    <ComboBox fx:id="sensorComboNumeric" GridPane.rowIndex="0"
+                        GridPane.columnIndex="1" />
+                    <Label text="Value" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                    <TextField fx:id="valueField" GridPane.rowIndex="1" GridPane.columnIndex="1" />
+                    <Label text="Unit" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+                    <TextField fx:id="unitField" GridPane.rowIndex="2" GridPane.columnIndex="1" />
+                    <Label text="Date" styleClass="form-label" GridPane.rowIndex="3" GridPane.columnIndex="0" />
+                    <DatePicker fx:id="datePickerNumeric" GridPane.rowIndex="3"
+                        GridPane.columnIndex="1" />
+                    <Label text="Hour" styleClass="form-label" GridPane.rowIndex="4" GridPane.columnIndex="0" />
+                    <TextField fx:id="hourFieldNumeric" GridPane.rowIndex="4"
+                        GridPane.columnIndex="1" promptText="00-23" />
+                </GridPane>
+                <Button fx:id="submitNumericButton" text="Record Numeric Reading"
+                    styleClass="primary-button" />
+            </VBox>
+        </Tab>
+        <Tab text="GPS Reading">
+            <VBox spacing="12" styleClass="card">
+                <GridPane hgap="12" vgap="10">
+                    <Label text="GPS Sensor" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                    <ComboBox fx:id="sensorComboGps" GridPane.rowIndex="0" GridPane.columnIndex="1" />
+                    <Label text="Latitude" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                    <TextField fx:id="latField" GridPane.rowIndex="1" GridPane.columnIndex="1" />
+                    <Label text="Longitude" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+                    <TextField fx:id="lonField" GridPane.rowIndex="2" GridPane.columnIndex="1" />
+                    <Label text="Date" styleClass="form-label" GridPane.rowIndex="3" GridPane.columnIndex="0" />
+                    <DatePicker fx:id="datePickerGps" GridPane.rowIndex="3" GridPane.columnIndex="1" />
+                    <Label text="Hour" styleClass="form-label" GridPane.rowIndex="4" GridPane.columnIndex="0" />
+                    <TextField fx:id="hourFieldGps" GridPane.rowIndex="4" GridPane.columnIndex="1"
+                        promptText="00-23" />
+                </GridPane>
+                <Button fx:id="submitGpsButton" text="Record GPS Reading"
+                    styleClass="primary-button" />
+            </VBox>
+        </Tab>
+        <Tab text="Production">
+            <VBox spacing="12" styleClass="card">
+                <GridPane hgap="12" vgap="10">
+                    <Label text="Zone" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                    <ComboBox fx:id="zoneComboProduction" GridPane.rowIndex="0"
+                        GridPane.columnIndex="1" />
+                    <Label text="Value" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                    <TextField fx:id="productionValueField" GridPane.rowIndex="1"
+                        GridPane.columnIndex="1" />
+                    <Label text="Date" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+                    <DatePicker fx:id="productionDatePicker" GridPane.rowIndex="2"
+                        GridPane.columnIndex="1" />
+                </GridPane>
+                <Button fx:id="submitProductionButton" text="Record Production"
+                    styleClass="primary-button" />
+            </VBox>
+        </Tab>
+        <Tab text="History">
+            <VBox spacing="12" styleClass="card">
+                <GridPane hgap="12" vgap="10">
+                    <Label text="Sensor" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0" />
+                    <ComboBox fx:id="sensorComboHistory" GridPane.rowIndex="0"
+                        GridPane.columnIndex="1" />
+                    <Label text="Start Date" styleClass="form-label" GridPane.rowIndex="1" GridPane.columnIndex="0" />
+                    <DatePicker fx:id="startDatePicker" GridPane.rowIndex="1"
+                        GridPane.columnIndex="1" />
+                    <Label text="End Date" styleClass="form-label" GridPane.rowIndex="2" GridPane.columnIndex="0" />
+                    <DatePicker fx:id="endDatePicker" GridPane.rowIndex="2" GridPane.columnIndex="1" />
+                </GridPane>
+                <Button fx:id="loadHistoryButton" text="Load History" />
+                <TableView VBox.vgrow="ALWAYS" fx:id="historyTable" />
+            </VBox>
+        </Tab>
+    </TabPane>
+</VBox>

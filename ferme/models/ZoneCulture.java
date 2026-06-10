@@ -1,4 +1,5 @@
 package ferme.models;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,15 +23,26 @@ public class ZoneCulture extends Zone {
     }
 
     public Culture getCulture(int index) {
-        if (index >= 0 && index < cultures.size()) return cultures.get(index);
+        if (index >= 0 && index < cultures.size())
+            return cultures.get(index);
         return null;
     }
 
-    public int getNbCultures() { return cultures.size(); }
+    public int getNbCultures() {
+        return cultures.size();
+    }
 
-    public String getTypeZone() { return "Culture"; }
+    public List<Culture> getCultures() {
+        return new ArrayList<>(cultures);
+    }
 
-    public int getNombreEntites() { return cultures.size(); }
+    public String getTypeZone() {
+        return "Culture";
+    }
+
+    public int getNombreEntites() {
+        return cultures.size();
+    }
 
     public void afficherDetails() {
         System.out.println(" Zone de Culture : " + nom + " (" + code + ") ");
@@ -46,10 +58,12 @@ public class ZoneCulture extends Zone {
         System.out.println("\nRapport des cultures Zone " + nom + " (" + code + ")");
 
         Map<FamilleCulture, Integer> compteurParFamille = new LinkedHashMap<>();
-        Map<StadeCroissance, Integer> compteurParStade  = new LinkedHashMap<>();
+        Map<StadeCroissance, Integer> compteurParStade = new LinkedHashMap<>();
 
-        for (FamilleCulture f : FamilleCulture.values()) compteurParFamille.put(f, 0);
-        for (StadeCroissance s : StadeCroissance.values()) compteurParStade.put(s, 0);
+        for (FamilleCulture f : FamilleCulture.values())
+            compteurParFamille.put(f, 0);
+        for (StadeCroissance s : StadeCroissance.values())
+            compteurParStade.put(s, 0);
 
         for (int i = 0; i < cultures.size(); i++) {
             FamilleCulture f = cultures.get(i).getFamille();
