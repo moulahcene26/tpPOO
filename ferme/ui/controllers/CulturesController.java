@@ -16,18 +16,29 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.io.IOException;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 
 public class CulturesController implements AppContextAware, Refreshable {
 
@@ -41,6 +52,8 @@ public class CulturesController implements AppContextAware, Refreshable {
     private Button updateStageButton;
     @FXML
     private Button reportButton;
+    @FXML
+    private CheckBox exportReportCheckBox;
 
     private UiFarmService farmService;
     private DialogService dialogService;
@@ -242,17 +255,74 @@ public class CulturesController implements AppContextAware, Refreshable {
     }
 
     private void generateReport() {
+        String report = buildReportText();
+
+        TextArea textArea = new TextArea(report);
+        textArea.setEditable(false);
+        textArea.setWrapText(false);
+        textArea.setPrefSize(640, 420);
+
+        ScrollPane scrollPane = new ScrollPane(textArea);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+
+        VBox vbox = new VBox(12, scrollPane);
+        vbox.setPrefSize(680, 480);
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Culture Report");
+        DialogPane pane = dialog.getDialogPane();
+        pane.setContent(vbox);
+        pane.getButtonTypes().addAll(ButtonType.CLOSE);
+        pane.setPrefSize(700, 520);
+        dialog.showAndWait();
+
+        if (!exportReportCheckBox.isSelected()) {
+            return;
+        }
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Save Culture Report");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Text Files", "*.txt"));
+        fileChooser.setInitialFileName("culture-report.txt");
+        java.io.File file = fileChooser.showSaveDialog(culturesTable.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+
+        try {
+            Path path = file.toPath();
+            Files.writeString(path, report, StandardCharsets.UTF_8);
+            dialogService.showInfo("Report Saved", "Culture report saved to:\n" + file.getAbsolutePath());
+        } catch (IOException e) {
+            dialogService.showError("Save Failed", e.getMessage());
+        }
+    }
+
+    private String buildReportText() {
         StringBuilder report = new StringBuilder();
-        report.append("Crop Report\n\n");
+        report.append("Crop Report\n");
+        report.append("Generated: ").append(LocalDate.now()).append("\n");
+        FamilleCulture filter = familyFilter.getValue();
+        report.append("Filter: ").append(filter != null ? filter.name() : "ALL").append("\n\n");
+
         List<CultureViewModel> items = culturesTable.getItems();
         if (items.isEmpty()) {
             report.append("No crops found.");
-        } else {
-            items.forEach(c -> report.append(c.getZoneCode()).append(" - ")
-                    .append(c.getName()).append(" (")
-                    .append(c.getFamily()).append(") stage: ")
-                    .append(c.getStage()).append("\n"));
+            return report.toString();
         }
-        dialogService.showInfo("Culture Report", report.toString());
+
+        for (CultureViewModel c : items) {
+            report.append("Zone: ").append(c.getZoneCode()).append("\n")
+                    .append("Crop: ").append(c.getName()).append("\n")
+                    .append("Family: ").append(c.getFamily()).append("\n")
+                    .append("Stage: ").append(c.getStage()).append("\n")
+                    .append("Planting: ").append(c.getPlantingDate()).append("\n")
+                    .append("Harvest: ").append(c.getHarvestDate()).append("\n")
+                    .append("pH range: ").append(c.getPhRange()).append("\n")
+                    .append("Humidity range: ").append(c.getHumidityRange()).append("\n")
+                    .append("---\n");
+        }
+        return report.toString();
     }
 }

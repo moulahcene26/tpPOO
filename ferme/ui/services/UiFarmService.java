@@ -23,6 +23,8 @@ import ferme.models.CapteurEnvironnemental;
 import ferme.models.CapteurGPS;
 import ferme.models.CapteurSol;
 import ferme.models.Culture;
+import ferme.models.EspeceAquacole;
+import ferme.models.HistoriqueProduction;
 import ferme.models.ExigencesPedologiques;
 import ferme.models.PositionGPS;
 import ferme.models.ProgrammeAlimentation;
@@ -198,6 +200,15 @@ public class UiFarmService {
         return ferme.ajouterZone(new ZoneAquacole(code, name));
     }
 
+    public boolean addAquacultureSpecies(String zoneCode, String speciesName, int quantity) {
+        Ferme ferme = context.requireFerme();
+        Zone zone = ferme.rechercherZone(zoneCode);
+        if (!(zone instanceof ZoneAquacole)) {
+            throw new IllegalArgumentException("Zone not found or not aquaculture: " + zoneCode);
+        }
+        return ((ZoneAquacole) zone).ajouterEspece(new EspeceAquacole(speciesName, quantity));
+    }
+
     public boolean renameZone(String code, String newName) {
         return context.requireFerme().modifierZone(code, newName);
     }
@@ -255,6 +266,69 @@ public class UiFarmService {
         return false;
     }
 
+    public boolean updateFeedingProgram(String zoneCode, String aliment, double dose, int freq) {
+        Zone zone = context.requireFerme().rechercherZone(zoneCode);
+        if (zone == null) {
+            throw new IllegalArgumentException("Zone not found: " + zoneCode);
+        }
+        return setFeedingProgram(zone, aliment, dose, freq);
+    }
+
+    public boolean recordHarvestWeight(String zoneCode, double weight, String date) {
+        context.requireFerme().enregistrerProduction(zoneCode, weight, date);
+        return true;
+    }
+
+    public List<ZoneAquacole> getAquacultureZones() {
+        if (!context.hasFerme()) {
+            return Collections.emptyList();
+        }
+        List<ZoneAquacole> zones = new ArrayList<>();
+        for (Zone zone : context.getFerme().getZones()) {
+            if (zone instanceof ZoneAquacole) {
+                zones.add((ZoneAquacole) zone);
+            }
+        }
+        return zones;
+    }
+
+    public List<Zone> getFeedingProgramZones() {
+        if (!context.hasFerme()) {
+            return Collections.emptyList();
+        }
+        List<Zone> zones = new ArrayList<>();
+        for (Zone zone : context.getFerme().getZones()) {
+            ProgrammeAlimentation programme = getFeedingProgram(zone);
+            if (programme != null) {
+                zones.add(zone);
+            }
+        }
+        return zones;
+    }
+
+    public List<Zone> getFeedableZones() {
+        if (!context.hasFerme()) {
+            return Collections.emptyList();
+        }
+        List<Zone> zones = new ArrayList<>();
+        for (Zone zone : context.getFerme().getZones()) {
+            if (zone instanceof ZoneElevage || zone instanceof ZoneAquacole) {
+                zones.add(zone);
+            }
+        }
+        return zones;
+    }
+
+    public ProgrammeAlimentation getFeedingProgram(Zone zone) {
+        if (zone instanceof ZoneElevage) {
+            return ((ZoneElevage) zone).getProgrammeAlimentation();
+        }
+        if (zone instanceof ZoneAquacole) {
+            return ((ZoneAquacole) zone).getProgrammeAlimentation();
+        }
+        return null;
+    }
+
     public boolean addEnvSensor(String code, String zone, TypeCapteurEnv type, double min, double max) {
         return context.requireFerme().ajouterCapteur(new CapteurEnvironnemental(code, zone, min, max, type));
     }
@@ -299,6 +373,32 @@ public class UiFarmService {
         context.requireFerme().enregistrerProduction(zoneCode, value, date);
     }
 
+    public List<String[]> getProductionEntries(String zoneCode, String startDate, String endDate) {
+        List<String[]> entries = new ArrayList<>();
+        Zone zone = context.requireFerme().rechercherZone(zoneCode);
+        if (zone == null) return entries;
+        HistoriqueProduction histo = zone.getHistoriqueProduction();
+        for (int i = 0; i < histo.getNbEntrees(); i++) {
+            String date = histo.getDate(i);
+            if ((startDate == null || date.compareTo(startDate) >= 0)
+                    && (endDate == null || date.compareTo(endDate) <= 0)) {
+                entries.add(new String[]{date, String.valueOf(histo.getValeur(i)), histo.getUnite()});
+            }
+        }
+        return entries;
+    }
+
+    public Animal findAnimal(int animalNumber) {
+        for (Zone zone : context.requireFerme().getZones()) {
+            if (zone instanceof ZoneElevage) {
+                for (Animal a : ((ZoneElevage) zone).getAnimaux()) {
+                    if (a.getNumero() == animalNumber) return a;
+                }
+            }
+        }
+        return null;
+    }
+
     public int importGlobalData(File file) {
         return ImporteurDonnees.chargerDepuisFichier(context.requireFerme(), file.getPath());
     }
@@ -334,6 +434,13 @@ public class UiFarmService {
 
     public boolean deleteAlert(int id) {
         return context.requireFerme().supprimerAlerte(id);
+    }
+
+    public List<Alerte> getAlertHistory() {
+        if (!context.hasFerme()) {
+            return Collections.emptyList();
+        }
+        return context.getFerme().getAlertesHistorique();
     }
 
     public Ferme getFarm() {

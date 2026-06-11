@@ -5,6 +5,7 @@ import ferme.models.Zone;
 import ferme.ui.AppContext;
 import ferme.ui.AppContextAware;
 import ferme.ui.Refreshable;
+import ferme.ui.components.SeverityBadge;
 import ferme.ui.components.StatCard;
 import ferme.ui.navigation.NavigationController;
 import ferme.ui.services.DialogService;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -67,6 +69,18 @@ public class DashboardController implements AppContextAware, Refreshable {
         TableColumn<AlertViewModel, String> alertSeverity = new TableColumn<>("SEVERITY");
         alertSeverity.setCellValueFactory(new PropertyValueFactory<>("severity"));
         alertSeverity.setPrefWidth(105);
+        alertSeverity.setCellFactory(column -> new TableCell<>() {
+            private final SeverityBadge badge = new SeverityBadge();
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null || item.isBlank()) {
+                    setGraphic(null); setText(null); return;
+                }
+                badge.setSeverity(item);
+                setGraphic(badge); setText(null);
+            }
+        });
 
         TableColumn<AlertViewModel, String> alertZone = new TableColumn<>("ZONE");
         alertZone.setCellValueFactory(new PropertyValueFactory<>("zoneCode"));
@@ -176,7 +190,8 @@ public class DashboardController implements AppContextAware, Refreshable {
 
     private void updateTables() {
         List<AlertViewModel> alertModels = new ArrayList<>();
-        for (Alerte alert : farmService.getRecentAlerts(8)) {
+        for (Alerte alert : farmService.getRecentAlerts(50)) {
+            if (alert.estAcquittee()) continue;
             String sensor = alert.getReleve() != null ? alert.getReleve().getCodeCapteur() : "";
             alertModels.add(new AlertViewModel(
                     alert.getId(), alert.getNiveau().name(), alert.getCodeZone(),

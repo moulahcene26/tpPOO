@@ -51,6 +51,11 @@ public class Animal {
     public void setPoids(double poids) { if (poids < 0) throw new IllegalArgumentException("Poids invalide"); this.poids = poids; }
     public void setPositionActuelle(PositionGPS pos) { this.positionActuelle = pos; }
 
+    public List<String> getEvenementsDates() { return evenementsDates; }
+    public List<String> getEvenementsDescriptions() { return evenementsDescriptions; }
+    public List<String> getHistoriquePoidsDate() { return historiquePoidsDate; }
+    public List<Double> getHistoriquePoids() { return historiquePoids; }
+
     public boolean ajouterEvenementSanitaire(String date, String description) {
         evenementsDates.add(date);
         evenementsDescriptions.add(description);

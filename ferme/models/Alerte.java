@@ -10,6 +10,7 @@ public class Alerte {
     private NiveauGravite niveau;
     private String codeZone;
     private boolean acquittee;
+    private boolean supprimee;
     private String dateCreation;
 
     public Alerte(Releve releve, NiveauGravite niveau, String codeZone) {
@@ -18,6 +19,7 @@ public class Alerte {
         this.niveau = niveau;
         this.codeZone = codeZone;
         this.acquittee = false;
+        this.supprimee = false;
         this.dateCreation = releve.getDate();
     }
 
@@ -26,12 +28,14 @@ public class Alerte {
     public NiveauGravite getNiveau() { return niveau; }
     public String getCodeZone() { return codeZone; }
     public boolean estAcquittee() { return acquittee; }
+    public boolean estSupprimee() { return supprimee; }
     public String getDateCreation() { return dateCreation; }
 
     public void acquitter() { this.acquittee = true; }
+    public void marquerSupprimee() { this.supprimee = true; }
 
     public String toString() {
-        String statut = acquittee ? "[ACQUITTÉE]" : "[ACTIVE]";
+        String statut = supprimee ? "[SUPPRIMÉE]" : acquittee ? "[ACQUITTÉE]" : "[ACTIVE]";
         return statut + " Alerte #" + id + " | " + niveau.getLibelle()
              + " | Zone: " + codeZone + " | " + releve;
     }

@@ -4,6 +4,8 @@
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
@@ -19,16 +21,26 @@
     <!-- Alert summary stat cards -->
     <FlowPane fx:id="alertStatsContainer" hgap="18" vgap="18" />
 
-    <!-- Filters toolbar -->
-    <HBox spacing="10" styleClass="toolbar">
-        <ComboBox fx:id="severityFilter" promptText="Severity" prefWidth="150" />
-        <ComboBox fx:id="zoneFilter" promptText="Zone" prefWidth="150" />
-        <CheckBox fx:id="activeOnlyCheck" text="Active only" />
-        <Button fx:id="sortButton" text="Sort by Severity" />
-        <Button fx:id="ackButton" text="Acknowledge" styleClass="primary-button" />
-        <Button fx:id="deleteButton" text="Delete" styleClass="danger-button" />
-    </HBox>
-
-    <!-- Alerts table -->
-    <TableView VBox.vgrow="ALWAYS" fx:id="alertsTable" />
+    <TabPane VBox.vgrow="ALWAYS">
+        <Tab text="Active">
+            <VBox spacing="10">
+                <!-- Filters toolbar -->
+                <HBox spacing="10" styleClass="toolbar">
+                    <ComboBox fx:id="severityFilter" promptText="Severity" prefWidth="150" />
+                    <ComboBox fx:id="zoneFilter" promptText="Zone" prefWidth="150" />
+                    <CheckBox fx:id="activeOnlyCheck" text="Active only" />
+                    <Button fx:id="sortButton" text="Sort by Severity" />
+                    <Button fx:id="ackButton" text="Acknowledge" styleClass="primary-button" />
+                    <Button fx:id="deleteButton" text="Delete" styleClass="danger-button" />
+                </HBox>
+                <!-- Alerts table -->
+                <TableView VBox.vgrow="ALWAYS" fx:id="alertsTable" />
+            </VBox>
+        </Tab>
+        <Tab text="History">
+            <VBox spacing="10">
+                <TableView VBox.vgrow="ALWAYS" fx:id="historyTable" />
+            </VBox>
+        </Tab>
+    </TabPane>
 </VBox>

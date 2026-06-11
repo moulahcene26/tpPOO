@@ -13,26 +13,35 @@ import ferme.models.Zone;
 import ferme.ui.AppContext;
 import ferme.ui.AppContextAware;
 import ferme.ui.Refreshable;
+import ferme.ui.components.SeverityBadge;
 import ferme.ui.navigation.NavigationController;
 import ferme.ui.services.DialogService;
 import ferme.ui.services.FileImportService;
 import ferme.ui.services.UiFarmService;
 import ferme.ui.viewmodels.SensorViewModel;
 import java.io.File;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 
 public class SensorsController implements AppContextAware, Refreshable {
 
@@ -41,6 +50,8 @@ public class SensorsController implements AppContextAware, Refreshable {
     @FXML private Button addSensorButton;
     @FXML private Button configureSensorButton;
     @FXML private Button changeStatusButton;
+    @FXML private Button suspendSensorButton;
+    @FXML private Button repairSensorButton;
     @FXML private Button importSensorsButton;
     @FXML private Button viewHistoryButton;
 
@@ -102,6 +113,22 @@ public class SensorsController implements AppContextAware, Refreshable {
         TableColumn<SensorViewModel, String> severityCol = new TableColumn<>("Severity");
         severityCol.setCellValueFactory(new PropertyValueFactory<>("latestSeverity"));
         severityCol.setPrefWidth(90);
+        severityCol.setCellFactory(column -> new TableCell<>() {
+            private final SeverityBadge badge = new SeverityBadge();
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null || item.isBlank()) {
+                    setGraphic(null);
+                    setText(null);
+                    return;
+                }
+                badge.setSeverity(item);
+                setGraphic(badge);
+                setText(null);
+            }
+        });
 
         sensorsTable.getColumns().setAll(codeCol, familyCol, typeCol, zoneCol, statusCol, minCol, maxCol,
                 readingCol, severityCol);
@@ -112,6 +139,8 @@ public class SensorsController implements AppContextAware, Refreshable {
         addSensorButton.setOnAction(event -> showAddSensorDialog());
         configureSensorButton.setOnAction(event -> configureSensor());
         changeStatusButton.setOnAction(event -> changeStatus());
+        suspendSensorButton.setOnAction(event -> suspendSensor());
+        repairSensorButton.setOnAction(event -> repairSensor());
         importSensorsButton.setOnAction(event -> importSensors());
         viewHistoryButton.setOnAction(event -> viewHistory());
     }
@@ -205,17 +234,8 @@ public class SensorsController implements AppContextAware, Refreshable {
         zoneBox.setButtonCell(zoneBox.getCellFactory().call(null));
 
         // Dynamic fields
-        ComboBox<TypeCapteurEnv> envTypeBox = new ComboBox<>();
-        envTypeBox.getItems().setAll(TypeCapteurEnv.values());
-
-        ComboBox<TypeCapteurSol> soilTypeBox = new ComboBox<>();
-        soilTypeBox.getItems().setAll(TypeCapteurSol.values());
-
-        ComboBox<TypeCapteurBio> bioTypeBox = new ComboBox<>();
-        bioTypeBox.getItems().setAll(TypeCapteurBio.values());
-
-        ComboBox<TypeCapteurEau> waterTypeBox = new ComboBox<>();
-        waterTypeBox.getItems().setAll(TypeCapteurEau.values());
+        ComboBox<Object> typeBox = new ComboBox<>();
+        typeBox.setPromptText("Select type");
 
         TextField minField = new TextField();
         TextField maxField = new TextField();
@@ -237,7 +257,7 @@ public class SensorsController implements AppContextAware, Refreshable {
         int row = 3;
         Label typeLabel = new Label("Type");
         grid.add(typeLabel, 0, row);
-        grid.add(envTypeBox, 1, row);
+        grid.add(typeBox, 1, row);
         int typeRow = row;
         row++;
         Label minLabel = new Label("Min");
@@ -290,36 +310,12 @@ public class SensorsController implements AppContextAware, Refreshable {
 
             if (isGps) {
                 typeLabel.setText("GPS sensor - no type needed");
-                envTypeBox.setVisible(false);
-                soilTypeBox.setVisible(false);
-                bioTypeBox.setVisible(false);
-                waterTypeBox.setVisible(false);
-            } else if (isBio) {
-                typeLabel.setText("Bio Type");
-                envTypeBox.setVisible(false);
-                soilTypeBox.setVisible(false);
-                bioTypeBox.setVisible(true);
-                waterTypeBox.setVisible(false);
-            } else if ("Soil".equals(n)) {
-                typeLabel.setText("Soil Type");
-                envTypeBox.setVisible(false);
-                soilTypeBox.setVisible(true);
-                bioTypeBox.setVisible(false);
-                waterTypeBox.setVisible(false);
-            } else if ("Water".equals(n)) {
-                typeLabel.setText("Water Type");
-                envTypeBox.setVisible(false);
-                soilTypeBox.setVisible(false);
-                bioTypeBox.setVisible(false);
-                waterTypeBox.setVisible(true);
             } else {
-                typeLabel.setText("Env Type");
-                envTypeBox.setVisible(true);
-                soilTypeBox.setVisible(false);
-                bioTypeBox.setVisible(false);
-                waterTypeBox.setVisible(false);
+                populateTypeBox(typeBox, n);
+                typeLabel.setText("Type");
             }
         });
+        familyBox.setValue("Environmental");
 
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(javafx.scene.control.ButtonType.OK, javafx.scene.control.ButtonType.CANCEL);
@@ -335,15 +331,15 @@ public class SensorsController implements AppContextAware, Refreshable {
                 String zoneCode = zone.getCode();
                 switch (family) {
                     case "Environmental":
-                        farmService.addEnvSensor(code, zoneCode, envTypeBox.getValue(),
+                        farmService.addEnvSensor(code, zoneCode, (TypeCapteurEnv) typeBox.getValue(),
                                 parseDouble(minField), parseDouble(maxField));
                         break;
                     case "Soil":
-                        farmService.addSoilSensor(code, zoneCode, soilTypeBox.getValue(),
+                        farmService.addSoilSensor(code, zoneCode, (TypeCapteurSol) typeBox.getValue(),
                                 parseDouble(minField), parseDouble(maxField));
                         break;
                     case "Biometric":
-                        farmService.addBioSensor(code, zoneCode, bioTypeBox.getValue(),
+                        farmService.addBioSensor(code, zoneCode, (TypeCapteurBio) typeBox.getValue(),
                                 parseDouble(minField), parseDouble(maxField),
                                 Integer.parseInt(animalField.getText().trim()));
                         break;
@@ -354,9 +350,11 @@ public class SensorsController implements AppContextAware, Refreshable {
                                 parseDouble(radiusField));
                         break;
                     case "Water":
-                        farmService.addWaterSensor(code, zoneCode, waterTypeBox.getValue(),
+                        farmService.addWaterSensor(code, zoneCode, (TypeCapteurEau) typeBox.getValue(),
                                 parseDouble(minField), parseDouble(maxField));
                         break;
+                    default:
+                        throw new IllegalArgumentException("Select a valid sensor family.");
                 }
                 refresh();
             } catch (RuntimeException e) {
@@ -419,6 +417,28 @@ public class SensorsController implements AppContextAware, Refreshable {
         }
     }
 
+    private void suspendSensor() {
+        SensorViewModel selected = getSelectedSensor();
+        if (selected == null) {
+            return;
+        }
+        if (dialogService.confirm("Suspend Sensor", "Suspend sensor " + selected.getCode() + "?")) {
+            farmService.changeSensorStatus(selected.getCode(), StatutCapteur.SUSPENDU);
+            refresh();
+        }
+    }
+
+    private void repairSensor() {
+        SensorViewModel selected = getSelectedSensor();
+        if (selected == null) {
+            return;
+        }
+        if (dialogService.confirm("Repair Sensor", "Set sensor " + selected.getCode() + " back to active?")) {
+            farmService.changeSensorStatus(selected.getCode(), StatutCapteur.ACTIF);
+            refresh();
+        }
+    }
+
     private void importSensors() {
         File file = fileImportService.pickFile("Select sensor file");
         if (file != null) {
@@ -433,28 +453,90 @@ public class SensorsController implements AppContextAware, Refreshable {
         if (selected == null) {
             return;
         }
-        Capteur capteur = null;
-        for (Capteur c : farmService.getSensors()) {
-            if (c.getCode().equals(selected.getCode())) {
-                capteur = c;
-                break;
-            }
-        }
+        Capteur capteur = findCapteur(selected.getCode());
         if (capteur == null) {
             return;
         }
-        StringBuilder builder = new StringBuilder();
-        builder.append("Reading history - Sensor ").append(capteur.getCode()).append("\n\n");
-        for (int i = 0; i < capteur.getNbReleves(); i++) {
-            Releve r = capteur.getReleve(i);
-            if (r != null) {
-                builder.append(r).append("\n");
+
+        DatePicker startPicker = new DatePicker();
+        DatePicker endPicker = new DatePicker();
+        startPicker.setPromptText("Start date");
+        endPicker.setPromptText("End date");
+
+        GridPane filterGrid = new GridPane();
+        filterGrid.setHgap(12);
+        filterGrid.setVgap(10);
+        filterGrid.add(new Label("Start date"), 0, 0);
+        filterGrid.add(startPicker, 1, 0);
+        filterGrid.add(new Label("End date"), 0, 1);
+        filterGrid.add(endPicker, 1, 1);
+
+        TextArea textArea = new TextArea();
+        textArea.setEditable(false);
+        textArea.setWrapText(false);
+        textArea.setPrefSize(600, 360);
+
+        Runnable loadHistory = () -> {
+            StringBuilder builder = new StringBuilder();
+            builder.append("Reading history - Sensor ").append(capteur.getCode()).append("\n\n");
+            int count = 0;
+            for (int i = 0; i < capteur.getNbReleves(); i++) {
+                Releve r = capteur.getReleve(i);
+                if (r == null) continue;
+                if (startPicker.getValue() != null && r.getDate().compareTo(startPicker.getValue().toString()) < 0) continue;
+                if (endPicker.getValue() != null && r.getDate().compareTo(endPicker.getValue().toString()) > 0) continue;
+                builder.append("  ").append(r).append("\n");
+                count++;
             }
+            if (count == 0) {
+                builder.append("No readings in this date range.");
+            }
+            textArea.setText(builder.toString());
+        };
+        loadHistory.run();
+
+        startPicker.valueProperty().addListener((obs, o, n) -> loadHistory.run());
+        endPicker.valueProperty().addListener((obs, o, n) -> loadHistory.run());
+
+        ScrollPane scrollPane = new ScrollPane(textArea);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        VBox vbox = new VBox(12, filterGrid, scrollPane);
+        vbox.setPrefSize(640, 480);
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Sensor History - " + capteur.getCode());
+        DialogPane pane = dialog.getDialogPane();
+        pane.setContent(vbox);
+        pane.getButtonTypes().addAll(ButtonType.CLOSE);
+        pane.setPrefSize(660, 520);
+        dialog.showAndWait();
+    }
+
+    private void showScrollableDialog(String title, String content) {
+        TextArea textArea = new TextArea(content);
+        textArea.setEditable(false);
+        textArea.setWrapText(false);
+        textArea.setPrefSize(600, 400);
+        ScrollPane scrollPane = new ScrollPane(textArea);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        VBox vbox = new VBox(12, scrollPane);
+        vbox.setPrefSize(640, 440);
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle(title);
+        DialogPane pane = dialog.getDialogPane();
+        pane.setContent(vbox);
+        pane.getButtonTypes().addAll(ButtonType.CLOSE);
+        pane.setPrefSize(660, 480);
+        dialog.showAndWait();
+    }
+
+    private Capteur findCapteur(String code) {
+        for (Capteur c : farmService.getSensors()) {
+            if (c.getCode().equals(code)) return c;
         }
-        if (capteur.getNbReleves() == 0) {
-            builder.append("No readings recorded.");
-        }
-        dialogService.showInfo("Sensor History", builder.toString());
+        return null;
     }
 
     private double parseDouble(TextField field) {
@@ -479,5 +561,24 @@ public class SensorsController implements AppContextAware, Refreshable {
     private void setVisible(GridPane grid, TextField field, boolean visible) {
         field.setVisible(visible);
         field.setManaged(visible);
+    }
+
+    private void populateTypeBox(ComboBox<Object> typeBox, String family) {
+        typeBox.getItems().clear();
+        if ("Environmental".equals(family)) {
+            typeBox.getItems().addAll((Object[]) TypeCapteurEnv.values());
+            typeBox.setValue(TypeCapteurEnv.TEMPERATURE);
+        } else if ("Soil".equals(family)) {
+            typeBox.getItems().addAll((Object[]) TypeCapteurSol.values());
+            typeBox.setValue(TypeCapteurSol.PH);
+        } else if ("Biometric".equals(family)) {
+            typeBox.getItems().addAll((Object[]) TypeCapteurBio.values());
+            typeBox.setValue(TypeCapteurBio.TEMPERATURE_CORPORELLE);
+        } else if ("Water".equals(family)) {
+            typeBox.getItems().addAll((Object[]) TypeCapteurEau.values());
+            typeBox.setValue(TypeCapteurEau.TEMPERATURE_EAU);
+        } else {
+            typeBox.setValue(null);
+        }
     }
 }

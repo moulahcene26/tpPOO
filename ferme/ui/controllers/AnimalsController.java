@@ -4,7 +4,9 @@ import ferme.enums.EtatSante;
 import ferme.enums.TypeElevage;
 import ferme.models.Animal;
 import ferme.models.PositionGPS;
+import ferme.models.ProgrammeAlimentation;
 import ferme.models.Zone;
+import ferme.models.ZoneAquacole;
 import ferme.models.ZoneElevage;
 import ferme.ui.AppContext;
 import ferme.ui.AppContextAware;
@@ -14,6 +16,7 @@ import ferme.ui.services.DialogService;
 import ferme.ui.services.FileImportService;
 import ferme.ui.services.UiFarmService;
 import ferme.ui.viewmodels.AnimalViewModel;
+import ferme.ui.viewmodels.FeedingScheduleViewModel;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -21,15 +24,20 @@ import java.util.Optional;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.DatePicker;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 
 public class AnimalsController implements AppContextAware, Refreshable {
 
@@ -47,6 +55,12 @@ public class AnimalsController implements AppContextAware, Refreshable {
     private Button addEventButton;
     @FXML
     private Button addWeightButton;
+    @FXML
+    private Button updateScheduleButton;
+    @FXML
+    private Button viewHistoryButton;
+    @FXML
+    private TableView<FeedingScheduleViewModel> feedingSchedulesTable;
 
     private UiFarmService farmService;
     private DialogService dialogService;
@@ -64,6 +78,7 @@ public class AnimalsController implements AppContextAware, Refreshable {
     @FXML
     private void initialize() {
         setupTable();
+        setupSchedulesTable();
         healthFilter.getItems().setAll(EtatSante.values());
         zoneFilter.valueProperty().addListener((obs, o, n) -> refresh());
         healthFilter.valueProperty().addListener((obs, o, n) -> refresh());
@@ -71,6 +86,8 @@ public class AnimalsController implements AppContextAware, Refreshable {
         updateHealthButton.setOnAction(event -> updateHealth());
         addEventButton.setOnAction(event -> addEvent());
         addWeightButton.setOnAction(event -> addWeight());
+        viewHistoryButton.setOnAction(event -> viewHistory());
+        updateScheduleButton.setOnAction(event -> updateFeedingSchedule());
     }
 
     private void setupTable() {
@@ -100,6 +117,31 @@ public class AnimalsController implements AppContextAware, Refreshable {
         posCol.setPrefWidth(170);
         animalsTable.getColumns().setAll(numberCol, speciesCol, zoneCol, typeCol, ageCol, weightCol, healthCol, posCol);
         animalsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+    }
+
+    private void setupSchedulesTable() {
+        TableColumn<FeedingScheduleViewModel, String> zoneCol = new TableColumn<>("Zone");
+        zoneCol.setCellValueFactory(new PropertyValueFactory<>("zoneCode"));
+        zoneCol.setPrefWidth(80);
+
+        TableColumn<FeedingScheduleViewModel, String> categoryCol = new TableColumn<>("Category");
+        categoryCol.setCellValueFactory(new PropertyValueFactory<>("category"));
+        categoryCol.setPrefWidth(140);
+
+        TableColumn<FeedingScheduleViewModel, String> feedCol = new TableColumn<>("Feed Type");
+        feedCol.setCellValueFactory(new PropertyValueFactory<>("feedType"));
+        feedCol.setPrefWidth(130);
+
+        TableColumn<FeedingScheduleViewModel, String> quantityCol = new TableColumn<>("Quantity / Meal");
+        quantityCol.setCellValueFactory(new PropertyValueFactory<>("quantityPerMeal"));
+        quantityCol.setPrefWidth(110);
+
+        TableColumn<FeedingScheduleViewModel, Integer> mealsCol = new TableColumn<>("Meals / Day");
+        mealsCol.setCellValueFactory(new PropertyValueFactory<>("mealsPerDay"));
+        mealsCol.setPrefWidth(95);
+
+        feedingSchedulesTable.getColumns().setAll(zoneCol, categoryCol, feedCol, quantityCol, mealsCol);
+        feedingSchedulesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
     }
 
     @Override
@@ -137,6 +179,21 @@ public class AnimalsController implements AppContextAware, Refreshable {
             }
         }
         animalsTable.setItems(FXCollections.observableArrayList(models));
+
+        List<FeedingScheduleViewModel> schedules = new ArrayList<>();
+        for (Zone zone : farmService.getFeedableZones()) {
+            ProgrammeAlimentation programme = farmService.getFeedingProgram(zone);
+            String feedType = programme != null ? programme.getTypeAliment() : "-";
+            String quantity = programme != null ? String.valueOf(programme.getQuantiteParRepas()) : "-";
+            int meals = programme != null ? programme.getNombreRepasParJour() : 0;
+            schedules.add(new FeedingScheduleViewModel(
+                    zone.getCode(),
+                    zone.getTypeZone(),
+                    feedType,
+                    quantity,
+                    meals));
+        }
+        feedingSchedulesTable.setItems(FXCollections.observableArrayList(schedules));
         if (navigationController != null) {
             navigationController.refreshTopBar();
         }
@@ -313,6 +370,99 @@ public class AnimalsController implements AppContextAware, Refreshable {
                 refresh();
             } catch (RuntimeException e) {
                 dialogService.showError("Record Weight Failed", e.getMessage());
+            }
+        }
+    }
+
+    private void viewHistory() {
+        AnimalViewModel selected = getSelectedAnimal();
+        if (selected == null) return;
+        Animal animal = farmService.findAnimal(selected.getNumber());
+        if (animal == null) {
+            dialogService.showWarning("Not Found", "Animal #" + selected.getNumber() + " not found.");
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("Animal #").append(animal.getNumero()).append(" - ").append(animal.getEspece()).append("\n\n");
+
+        sb.append("--- Health Events ---\n");
+        List<String> eventDates = animal.getEvenementsDates();
+        List<String> eventDescs = animal.getEvenementsDescriptions();
+        if (eventDates.isEmpty()) {
+            sb.append("  No health events recorded.\n");
+        } else {
+            for (int i = 0; i < eventDates.size(); i++) {
+                sb.append("  ").append(eventDates.get(i)).append(" : ").append(eventDescs.get(i)).append("\n");
+            }
+        }
+
+        sb.append("\n--- Weight History ---\n");
+        List<String> weightDates = animal.getHistoriquePoidsDate();
+        List<Double> weightValues = animal.getHistoriquePoids();
+        if (weightDates.isEmpty()) {
+            sb.append("  No weight records.\n");
+        } else {
+            for (int i = 0; i < weightDates.size(); i++) {
+                sb.append("  ").append(weightDates.get(i)).append(" : ").append(weightValues.get(i)).append(" kg\n");
+            }
+        }
+
+        TextArea textArea = new TextArea(sb.toString());
+        textArea.setEditable(false);
+        textArea.setWrapText(false);
+        textArea.setPrefSize(500, 350);
+        ScrollPane scrollPane = new ScrollPane(textArea);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        VBox vbox = new VBox(12, scrollPane);
+        vbox.setPrefSize(540, 390);
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Animal History - #" + animal.getNumero());
+        DialogPane pane = dialog.getDialogPane();
+        pane.setContent(vbox);
+        pane.getButtonTypes().addAll(ButtonType.CLOSE);
+        pane.setPrefSize(560, 430);
+        dialog.showAndWait();
+    }
+
+    private void updateFeedingSchedule() {
+        FeedingScheduleViewModel selected = feedingSchedulesTable.getSelectionModel().getSelectedItem();
+        if (selected == null) {
+            dialogService.showWarning("Selection Required", "Select a feeding schedule first.");
+            return;
+        }
+
+        Dialog<Void> dialog = new Dialog<>();
+        dialog.setTitle("Add / Update Feeding Schedule");
+        String feedType = "-".equals(selected.getFeedType()) ? "" : selected.getFeedType();
+        String quantity = "-".equals(selected.getQuantityPerMeal()) ? "" : selected.getQuantityPerMeal();
+        String meals = selected.getMealsPerDay() <= 0 ? "" : String.valueOf(selected.getMealsPerDay());
+        TextField feedField = new TextField(feedType);
+        TextField quantityField = new TextField(quantity);
+        TextField mealsField = new TextField(meals);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(12);
+        grid.setVgap(10);
+        grid.add(new Label("Feed type"), 0, 0);
+        grid.add(feedField, 1, 0);
+        grid.add(new Label("Quantity / meal"), 0, 1);
+        grid.add(quantityField, 1, 1);
+        grid.add(new Label("Meals / day"), 0, 2);
+        grid.add(mealsField, 1, 2);
+
+        dialog.getDialogPane().setContent(grid);
+        dialog.getDialogPane().getButtonTypes().addAll(javafx.scene.control.ButtonType.OK,
+                javafx.scene.control.ButtonType.CANCEL);
+        var result = dialog.showAndWait();
+        if (result.isPresent()) {
+            try {
+                double parsedQuantity = Double.parseDouble(quantityField.getText().trim());
+                int parsedMeals = Integer.parseInt(mealsField.getText().trim());
+                farmService.updateFeedingProgram(selected.getZoneCode(), feedField.getText().trim(), parsedQuantity, parsedMeals);
+                refresh();
+            } catch (RuntimeException e) {
+                dialogService.showError("Update Feeding Schedule Failed", e.getMessage());
             }
         }
     }

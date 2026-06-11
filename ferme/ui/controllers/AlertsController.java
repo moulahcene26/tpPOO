@@ -5,6 +5,7 @@ import ferme.models.Alerte;
 import ferme.ui.AppContext;
 import ferme.ui.AppContextAware;
 import ferme.ui.Refreshable;
+import ferme.ui.components.SeverityBadge;
 import ferme.ui.components.StatCard;
 import ferme.ui.navigation.NavigationController;
 import ferme.ui.services.DialogService;
@@ -21,6 +22,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -36,10 +38,12 @@ public class AlertsController implements AppContextAware, Refreshable {
     @FXML private Button ackButton;
     @FXML private Button deleteButton;
     @FXML private TableView<AlertViewModel> alertsTable;
+    @FXML private TableView<AlertViewModel> historyTable;
 
     private UiFarmService farmService;
     private DialogService dialogService;
     private NavigationController navigationController;
+    private javafx.beans.value.ChangeListener<String> zoneFilterListener;
     private final Map<String, StatCard> alertStatCards = new LinkedHashMap<>();
 
     @Override
@@ -55,6 +59,7 @@ public class AlertsController implements AppContextAware, Refreshable {
     private void initialize() {
         setupAlertStats();
         setupTable();
+        setupHistoryTable();
         setupFilters();
         wireActions();
     }
@@ -76,6 +81,22 @@ public class AlertsController implements AppContextAware, Refreshable {
         TableColumn<AlertViewModel, String> severityCol = new TableColumn<>("Severity");
         severityCol.setCellValueFactory(new PropertyValueFactory<>("severity"));
         severityCol.setPrefWidth(120);
+        severityCol.setCellFactory(column -> new TableCell<>() {
+            private final SeverityBadge badge = new SeverityBadge();
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null || item.isBlank()) {
+                    setGraphic(null);
+                    setText(null);
+                    return;
+                }
+                badge.setSeverity(item);
+                setGraphic(badge);
+                setText(null);
+            }
+        });
 
         TableColumn<AlertViewModel, String> zoneCol = new TableColumn<>("Zone");
         zoneCol.setCellValueFactory(new PropertyValueFactory<>("zoneCode"));
@@ -101,11 +122,62 @@ public class AlertsController implements AppContextAware, Refreshable {
         alertsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
     }
 
+    private void setupHistoryTable() {
+        TableColumn<AlertViewModel, Integer> idCol = new TableColumn<>("ID");
+        idCol.setCellValueFactory(new PropertyValueFactory<>("id"));
+        idCol.setPrefWidth(50);
+        idCol.setMaxWidth(60);
+
+        TableColumn<AlertViewModel, String> severityCol = new TableColumn<>("Severity");
+        severityCol.setCellValueFactory(new PropertyValueFactory<>("severity"));
+        severityCol.setPrefWidth(120);
+        severityCol.setCellFactory(column -> new TableCell<>() {
+            private final SeverityBadge badge = new SeverityBadge();
+
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null || item.isBlank()) {
+                    setGraphic(null);
+                    setText(null);
+                    return;
+                }
+                badge.setSeverity(item);
+                setGraphic(badge);
+                setText(null);
+            }
+        });
+
+        TableColumn<AlertViewModel, String> zoneCol = new TableColumn<>("Zone");
+        zoneCol.setCellValueFactory(new PropertyValueFactory<>("zoneCode"));
+        zoneCol.setPrefWidth(85);
+
+        TableColumn<AlertViewModel, String> sensorCol = new TableColumn<>("Sensor");
+        sensorCol.setCellValueFactory(new PropertyValueFactory<>("sensorCode"));
+        sensorCol.setPrefWidth(110);
+
+        TableColumn<AlertViewModel, String> dateCol = new TableColumn<>("Date");
+        dateCol.setCellValueFactory(new PropertyValueFactory<>("date"));
+        dateCol.setPrefWidth(165);
+
+        TableColumn<AlertViewModel, String> statusCol = new TableColumn<>("Status");
+        statusCol.setCellValueFactory(new PropertyValueFactory<>("statusText"));
+        statusCol.setPrefWidth(115);
+
+        TableColumn<AlertViewModel, String> summaryCol = new TableColumn<>("Details");
+        summaryCol.setCellValueFactory(new PropertyValueFactory<>("summary"));
+        summaryCol.setPrefWidth(280);
+
+        historyTable.getColumns().setAll(idCol, severityCol, zoneCol, sensorCol, dateCol, statusCol, summaryCol);
+        historyTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+    }
+
     private void setupFilters() {
         severityFilter.getItems().setAll("", "CRITIQUE", "AVERTISSEMENT", "NORMAL");
         severityFilter.setValue("");
         severityFilter.valueProperty().addListener((obs, o, n) -> refresh());
-        zoneFilter.valueProperty().addListener((obs, o, n) -> refresh());
+        zoneFilterListener = (obs, o, n) -> refresh();
+        zoneFilter.valueProperty().addListener(zoneFilterListener);
         activeOnlyCheck.selectedProperty().addListener((obs, o, n) -> refresh());
     }
 
@@ -120,7 +192,15 @@ public class AlertsController implements AppContextAware, Refreshable {
     public void refresh() {
         if (farmService == null) return;
 
+        String prevZone = zoneFilter.getValue();
+        zoneFilter.valueProperty().removeListener(zoneFilterListener);
         zoneFilter.getItems().setAll(getZoneCodesWithAlerts());
+        if (prevZone != null && zoneFilter.getItems().contains(prevZone)) {
+            zoneFilter.setValue(prevZone);
+        } else {
+            zoneFilter.setValue(null);
+        }
+        zoneFilter.valueProperty().addListener(zoneFilterListener);
         updateAlertStats();
 
         NiveauGravite niveau = parseSeverity(severityFilter.getValue());
@@ -136,6 +216,16 @@ public class AlertsController implements AppContextAware, Refreshable {
                     sensor, alert.getDateCreation(), alert.estAcquittee(), alert.toString()));
         }
         alertsTable.setItems(FXCollections.observableArrayList(models));
+
+        List<AlertViewModel> historyModels = new ArrayList<>();
+        for (Alerte alert : farmService.getAlertHistory()) {
+            String sensor = alert.getReleve() != null ? alert.getReleve().getCodeCapteur() : "";
+            historyModels.add(new AlertViewModel(
+                    alert.getId(), alert.getNiveau().name(), alert.getCodeZone(),
+                    sensor, alert.getDateCreation(), alert.estAcquittee(), alert.estSupprimee(), alert.toString()));
+        }
+        historyTable.setItems(FXCollections.observableArrayList(historyModels));
+
         if (navigationController != null) navigationController.refreshTopBar();
     }
 

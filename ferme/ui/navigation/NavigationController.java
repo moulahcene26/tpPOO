@@ -24,6 +24,8 @@ public class NavigationController {
     @FXML
     private Button navZones;
     @FXML
+    private Button navAquaculture;
+    @FXML
     private Button navCultures;
     @FXML
     private Button navAnimals;
@@ -70,6 +72,7 @@ public class NavigationController {
 
         viewMap.put(navDashboard, "/ferme/ui/fxml/DashboardView.fxml");
         viewMap.put(navZones, "/ferme/ui/fxml/ZonesView.fxml");
+        viewMap.put(navAquaculture, "/ferme/ui/fxml/AquacultureView.fxml");
         viewMap.put(navCultures, "/ferme/ui/fxml/CulturesView.fxml");
         viewMap.put(navAnimals, "/ferme/ui/fxml/AnimalsView.fxml");
         viewMap.put(navSensors, "/ferme/ui/fxml/SensorsView.fxml");
@@ -149,7 +152,8 @@ public class NavigationController {
             contentPane.getChildren().setAll(scroller);
             refreshTopBar();
         } catch (Exception e) {
-            dialogService.showError("Navigation Error", "Unable to load view: " + viewPath);
+            dialogService.showError("Navigation Error", "Unable to load view: " + viewPath + "\n" + e.getMessage());
+            e.printStackTrace();
         }
     }
 

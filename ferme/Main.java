@@ -320,6 +320,7 @@ public class Main {
                     "4. Ajouter capteur GPS",
                     "5. Ajouter capteur eau",
                     "6. Charger capteurs depuis fichier",
+                    "7. Changer statut d'un capteur",
                     "0. Retour");
 
             try {
@@ -330,6 +331,7 @@ public class Main {
                     case 4: ajouterCapteurGPS(); break;
                     case 5: ajouterCapteurEau(); break;
                     case 6: chargerCapteursFichiers(); break;
+                    case 7: changerStatutCapteur(); break;
                     case 0: back = true;         break;
                     default: System.out.println("Choix inconnu.");
                 }
@@ -399,6 +401,12 @@ public class Main {
         }
         int total = ferme.chargerCapteursDepuisFichiers(chemins);
         System.out.println("Capteurs charges : " + total);
+    }
+
+    private static void changerStatutCapteur() {
+        String codeCapteur = readRequiredString("Code du capteur: ");
+        StatutCapteur statut = readEnum("Nouveau statut", StatutCapteur.class);
+        ferme.changerStatutCapteur(codeCapteur, statut);
     }
 
     // =========================================================================

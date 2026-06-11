@@ -18,6 +18,7 @@ public class Ferme {
     private Map<String, Zone> zones;
     private Map<String, Capteur> capteurs;
     private List<Alerte> alertes;
+    private List<Alerte> alertesHistorique;
 
     private static final String ANSI_RESET = "[0m";
     private static final String ANSI_VERT = "[32m";
@@ -29,6 +30,7 @@ public class Ferme {
         this.zones = new HashMap<>();
         this.capteurs = new HashMap<>();
         this.alertes = new ArrayList<>();
+        this.alertesHistorique = new ArrayList<>();
     }
 
     public String getNomFerme() {
@@ -45,6 +47,10 @@ public class Ferme {
 
     public List<Alerte> getAlertes() {
         return new ArrayList<>(alertes);
+    }
+
+    public List<Alerte> getAlertesHistorique() {
+        return new ArrayList<>(alertesHistorique);
     }
 
     public Capteur getCapteur(String codeCapteur) {
@@ -114,8 +120,6 @@ public class Ferme {
         return zones.get(codeZone);
     }
 
-    // Compatibilité : méthode d'accès par ID attendue par certains appels
-    // (Main.java)
     public Zone getZoneById(String id) {
         return rechercherZone(id);
     }
@@ -679,6 +683,10 @@ public class Ferme {
                     + codeCapteur + ".");
             return false;
         }
+        if (capteur.getStatut() != StatutCapteur.ACTIF) {
+            System.out.println("  Capteur " + codeCapteur + " suspendu, relevé ignoré.");
+            return false;
+        }
         boolean ok = capteur.enregistrerReleve(releve);
         if (ok) {
             synchroniserPositionAnimalSiGPS(capteur, releve);
@@ -783,8 +791,10 @@ public class Ferme {
     public boolean acquitterAlerte(int idAlerte) {
         for (int i = 0; i < alertes.size(); i++) {
             if (alertes.get(i).getId() == idAlerte) {
-                alertes.get(i).acquitter();
-                System.out.println("Alerte #" + idAlerte + " acquittée.");
+                Alerte a = alertes.remove(i);
+                a.acquitter();
+                alertesHistorique.add(a);
+                System.out.println("Alerte #" + idAlerte + " acquittée et déplacée dans l'historique.");
                 return true;
             }
         }
@@ -795,8 +805,10 @@ public class Ferme {
     public boolean supprimerAlerte(int idAlerte) {
         for (int i = 0; i < alertes.size(); i++) {
             if (alertes.get(i).getId() == idAlerte) {
-                alertes.remove(i);
-                System.out.println("Alerte #" + idAlerte + " supprimée.");
+                Alerte a = alertes.remove(i);
+                a.marquerSupprimee();
+                alertesHistorique.add(a);
+                System.out.println("Alerte #" + idAlerte + " marquée supprimée et déplacée dans l'historique.");
                 return true;
             }
         }

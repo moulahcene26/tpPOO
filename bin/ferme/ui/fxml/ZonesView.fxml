@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox VBox.vgrow="ALWAYS" fx:controller="ferme.ui.controllers.ZonesController"
+    xmlns:fx="http://javafx.com/fxml" spacing="20" styleClass="page">
+    <VBox spacing="4">
+        <Label text="Zones" styleClass="page-title" />
+        <Label text="Manage culture, livestock, and aquaculture zones" styleClass="farm-name" />
+    </VBox>
+    <HBox spacing="10" styleClass="toolbar">
+        <TextField fx:id="searchField" promptText="Search zones..." prefWidth="220" />
+        <Button fx:id="addCultureZoneButton" text="+ Culture Zone" styleClass="primary-button" />
+        <Button fx:id="addLivestockZoneButton" text="+ Livestock Zone" styleClass="secondary-button" />
+        <Button fx:id="addAquacultureZoneButton" text="+ Aquaculture Zone" styleClass="secondary-button" />
+        <Button fx:id="renameZoneButton" text="Rename" />
+        <Button fx:id="suspendZoneButton" text="Suspend" styleClass="warning-button" />
+        <Button fx:id="activateZoneButton" text="Activate" styleClass="primary-button" />
+        <Button fx:id="detailsZoneButton" text="Details" />
+    </HBox>
+    <TableView VBox.vgrow="ALWAYS" fx:id="zonesTable" />
+</VBox>

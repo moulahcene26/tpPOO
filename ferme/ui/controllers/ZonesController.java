@@ -22,14 +22,19 @@ import java.util.Optional;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
+import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 
 public class ZonesController implements AppContextAware, Refreshable {
 
@@ -219,11 +224,17 @@ public class ZonesController implements AppContextAware, Refreshable {
         dialog.setTitle("Add Aquaculture Zone");
         TextField codeField = new TextField();
         TextField nameField = new TextField();
+        TextField speciesField = new TextField();
+        TextField quantityField = new TextField();
         GridPane grid = buildGrid();
         grid.add(new Label("Code"), 0, 0);
         grid.add(codeField, 1, 0);
         grid.add(new Label("Name"), 0, 1);
         grid.add(nameField, 1, 1);
+        grid.add(new Label("Species (optional)"), 0, 2);
+        grid.add(speciesField, 1, 2);
+        grid.add(new Label("Quantity"), 0, 3);
+        grid.add(quantityField, 1, 3);
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().addAll(javafx.scene.control.ButtonType.OK,
                 javafx.scene.control.ButtonType.CANCEL);
@@ -231,6 +242,12 @@ public class ZonesController implements AppContextAware, Refreshable {
         if (result.isPresent() && result.isPresent()) {
             try {
                 if (farmService.addAquacultureZone(codeField.getText().trim(), nameField.getText().trim())) {
+                    String species = speciesField.getText().trim();
+                    if (!species.isEmpty()) {
+                        int qty = quantityField.getText().trim().isEmpty() ? 0
+                                : Integer.parseInt(quantityField.getText().trim());
+                        farmService.addAquacultureSpecies(codeField.getText().trim(), species, qty);
+                    }
                     refresh();
                 }
             } catch (RuntimeException e) {
@@ -312,7 +329,22 @@ public class ZonesController implements AppContextAware, Refreshable {
             builder.append("- ").append(hist.getDate(i)).append(": ")
                     .append(hist.getValeur(i)).append(" ").append(hist.getUnite()).append("\n");
         }
-        dialogService.showInfo("Zone Details", builder.toString());
+        TextArea textArea = new TextArea(builder.toString());
+        textArea.setEditable(false);
+        textArea.setWrapText(false);
+        textArea.setPrefSize(540, 400);
+        ScrollPane scrollPane = new ScrollPane(textArea);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
+        VBox vbox = new VBox(12, scrollPane);
+        vbox.setPrefSize(580, 440);
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Zone Details");
+        DialogPane pane = dialog.getDialogPane();
+        pane.setContent(vbox);
+        pane.getButtonTypes().addAll(ButtonType.CLOSE);
+        pane.setPrefSize(600, 480);
+        dialog.showAndWait();
     }
 
     private GridPane buildGrid() {

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox VBox.vgrow="ALWAYS" fx:controller="ferme.ui.controllers.ImportsController"
+    xmlns:fx="http://javafx.com/fxml" spacing="20" styleClass="page">
+    <VBox spacing="4">
+        <Label text="Imports" styleClass="page-title" />
+        <Label text="Import farm data, sensors, and readings from files" styleClass="farm-name" />
+    </VBox>
+
+    <VBox spacing="8" styleClass="card">
+        <Label text="Global Data Import" styleClass="section-title" />
+        <Label text="Import complete farm configuration including zones, cultures, animals, and sensors."
+            styleClass="farm-name" wrapText="true" />
+        <HBox spacing="10">
+            <Label fx:id="globalFileLabel" text="No file selected" styleClass="farm-name"
+                HBox.hgrow="ALWAYS" />
+            <Button fx:id="chooseGlobalFileButton" text="Choose File" styleClass="secondary-button" />
+            <Button fx:id="importGlobalButton" text="Import" styleClass="primary-button" />
+        </HBox>
+    </VBox>
+
+    <VBox spacing="8" styleClass="card">
+        <Label text="Sensor File Import" styleClass="section-title" />
+        <Label text="Load additional sensors from a dedicated sensor format file." styleClass="farm-name"
+            wrapText="true" />
+        <HBox spacing="10">
+            <Label fx:id="sensorFileLabel" text="No file selected" styleClass="farm-name"
+                HBox.hgrow="ALWAYS" />
+            <Button fx:id="chooseSensorFileButton" text="Choose File" styleClass="secondary-button" />
+            <Button fx:id="importSensorButton" text="Import" styleClass="primary-button" />
+        </HBox>
+    </VBox>
+
+    <VBox spacing="8" styleClass="card">
+        <Label text="Readings File Import" styleClass="section-title" />
+        <Label text="Load numeric and GPS readings from a formatted text file." styleClass="farm-name"
+            wrapText="true" />
+        <HBox spacing="10">
+            <Label fx:id="readingFileLabel" text="No file selected" styleClass="farm-name"
+                HBox.hgrow="ALWAYS" />
+            <Button fx:id="chooseReadingFileButton" text="Choose File" styleClass="secondary-button" />
+            <Button fx:id="importReadingButton" text="Import" styleClass="primary-button" />
+        </HBox>
+    </VBox>
+
+    <VBox spacing="8" styleClass="card">
+        <Label text="Import Log" styleClass="section-title" />
+        <TextArea fx:id="importStatusArea" prefRowCount="8" editable="false"
+            promptText="Import results will appear here..." />
+    </VBox>
+</VBox>
